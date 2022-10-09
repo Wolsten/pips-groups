@@ -1,0 +1,37 @@
+#subscribe {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#subscribe label,
+#subscribe div {
+    width: 360px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+#subscribe label[for=submit] {
+    justify-content: flex-end;
+}
+
+#subscribe span {
+    width: 100px;
+}
+
+#subscribe input {
+    width: 260px;
+}
+
+#subscribe div.error {
+    color: red;
+}
+
+#subscribe button {
+    margin-top: 1rem;
+    display: block;
+    float: right;
+}
