@@ -9,7 +9,7 @@ class UserSubscription {
     public static function shortcode(){
         // echo "<h1>Home folder=".get_bloginfo('url')."</h1>";
         // Testing
-        $clean = array( "first_name"=>"Ben", "last_name"=>"Down", "email"=>"ben.down@gmail.com" );
+        $clean = array( "first_name"=>"Steve", "last_name"=>"Davison", "email"=>"stephenjohndavison@gmail.com" );
         $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         // $clean = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         // $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
@@ -33,8 +33,17 @@ class UserSubscription {
             }
         // Not submitted 
         } else {
+            // Check for sending notifications
+            if ( isset($_REQUEST['notification']) ){
+                $post_id = intval($_REQUEST['notification']);
+                if ( isset($_REQUEST['confirm']) ){
+                    Notifications::send($post_id);
+                } else {
+                    Notifications::request_confirmation($post_id);
+                }
+                return;
             // Check for validation link
-            if ( isset($_REQUEST['validate']) && isset($_REQUEST['key']) && isset($_REQUEST['email']) ){
+            } else if ( isset($_REQUEST['validate']) && isset($_REQUEST['key']) && isset($_REQUEST['email']) ){
                 if( self::validate_subscription($_REQUEST) ){ 
                     echo "<p>Your subscription was validated! We will let you know when new content is added to the site.</p>";
                     return;
@@ -43,7 +52,7 @@ class UserSubscription {
                 }
             // Check for unsubscribe
             } else if ( isset($_REQUEST['unsubscribe']) && isset($_REQUEST['id']) && isset($_REQUEST['email']) ){
-                if( unsubscribe($_REQUEST) ){ 
+                if( self::unsubscribe($_REQUEST) ){ 
                     echo "<p>Your subscription has been cancelled. You will no longer receive emails notifications when new content is added to the site.</p>";
                     return;
                 } else {
@@ -97,8 +106,8 @@ class UserSubscription {
         $subscriber = Subscriber::get($clean['email']);
         if ( $subscriber ){
             // If the record fully matched let them know that already subscribed
-            print_r('<p>Subscriber</p>');
-            print_r($subscriber);
+            // print_r('<p>Subscriber</p>');
+            // print_r($subscriber);
             if ( $clean['first_name'] === $subscriber->first_name && 
                  $clean['last_name']  === $subscriber->last_name ){
                 $errors['email'] = "You are already subscribed";
@@ -114,8 +123,6 @@ class UserSubscription {
 
     static function confirmation($subscriber_id, $validation_key, $subscriber){ 
         $status = Notifications::send_subscribe_email($subscriber_id, $subscriber['first_name'], $subscriber['email'], $validation_key);
-        // $status = self::send_email($user_id, $user,$validation_key); 
-        print_r($status);
         if ( !is_wp_error( $status) ){
             echo "<h2>Nearly there " . $subscriber['first_name'] ."!</h2>";
             echo "<p>We've sent you an email - please click on the link inside to confirm your subscription.</p>";
@@ -130,15 +137,15 @@ class UserSubscription {
         // If have values then check against registered subscriber
         if ( $clean['email'] && $clean['key'] ){
             $subscriber = Subscriber::get($clean['email']);
-            print_r('<p>Validating subscription - existing subscriber?</p>');
-            print_r($subscriber);
+            // print_r('<p>Validating subscription - existing subscriber?</p>');
+            // print_r($subscriber);
             if ( $subscriber ){
                 // Get the validation key form the user meta data
                 // If match then set the user as validated by setting role to subscriber
-                echo "<p>User Key = $subscriber->validation_key</p>";
-                echo "<p>Email Key = ". $clean['key'] ."</p>";
+                // echo "<p>User Key = $subscriber->validation_key</p>";
+                // echo "<p>Email Key = ". $clean['key'] ."</p>";
                 if ( $subscriber->validation_key == $clean['key']){
-                    echo "Keys matched";
+                    // echo "Keys matched";
                     return Subscriber::validate($subscriber->ID);
                 }
             }
@@ -156,19 +163,12 @@ class UserSubscription {
         if ( $clean['email'] && $clean['user_id'] ){
             $subscriber = Subscriber::get($clean['email']);
             if ( $subscriber ){
-                echo "<p>Found subscriber</p>";
                 print_r($subscriber);
-                // @todo
-                // If match then delete the user (could bit don't reassign posts since checking that
-                // the user only has a subscribe role)
-                // if ( $existing_user->ID == $clean['user_id'] ){
-                //     echo "<p>deleting user</p>";
-                //     $status = wp_delete_user($existing_user->ID);
-                //     if ( !is_wp_error( $status) ){
-                //         echo "<p>deleted user</p>";
-                //         return true;
-                //     }
-                // }
+                if ( $subscriber ){
+                    $status = wp_delete_post($subscriber->ID, $force_delete=true);
+                    if ( !$status ) return false;
+                    return true;
+                }
             }
         }
         return false;

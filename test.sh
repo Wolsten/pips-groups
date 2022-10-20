@@ -16,6 +16,7 @@ mkdir ${plugins}/sjd_subscribe_plugin
 
 # Copy the plugin files
 cp -r includes ${plugins}/sjd_subscribe_plugin/
+cp -r images ${plugins}/sjd_subscribe_plugin/
 cp -r readme.md ${plugins}/sjd_subscribe_plugin/
 cp -r sjd_subscribe.php ${plugins}/sjd_subscribe_plugin/
 cp -r styles.css ${plugins}/sjd_subscribe_plugin/

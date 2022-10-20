@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 class Subscriber {
 
-    public const POST_TYPE = 'subscribers'; // Registered as 'subscribers', i.e. plural
-    public const POST_NAME = 'subscriber';
+    public const POST_TYPE = 'subscribers'; // Custom post type
+    public const POST_NAME = 'subscriber';  // Custom post name used as the prefix for custom fields
 
     public const CUSTOM_FIELDS = array(
         array("name"=>"first_name", "title"=>"First name", "type"=>"text", "required"=>true),
@@ -20,6 +20,8 @@ class Subscriber {
             'singular_label' => ucfirst(self::POST_NAME),
             'public' => true,
             'show_ui' => true, // UI in admin panel
+            'show_in_menu' => true,
+            'menu_icon' => 'dashicons-share',
             'capability_type' => 'post',
             'hierarchical' => false,
             'rewrite' => array("slug" => self::POST_NAME), // Permalinks format
@@ -82,7 +84,7 @@ class Subscriber {
         $clean = array();
         $errors = array();
         $success = true;
-        print_r($inputs);
+        // print_r($inputs);
         foreach( self::CUSTOM_FIELDS as $field ){
             if ( isset($inputs[$field['name']])){
                 $clean[$field['name']] = self::sanitise_field($field,$inputs[$field['name']]);
@@ -116,8 +118,8 @@ class Subscriber {
         if ( $post ){
             // Add meta data to the post object
             $meta = get_post_meta( $post->ID );
-            print_r('<p>got meta</p>');
-            print_r($meta);
+            // print_r('<p>got meta</p>');
+            // print_r($meta);
             if ( $meta ){
                 foreach( $meta as $key=>$value ){
                     $name = str_replace(self::POST_NAME.'_', '', $key);
@@ -130,15 +132,15 @@ class Subscriber {
     }
 
     public static function create( $fields ){
-        print_r('<p>Fields</p>');
-        print_r($fields);
+        // print_r('<p>Fields</p>');
+        // print_r($fields);
         $newSubscriber = array(
             'post_title' => $fields['email'],
             'post_status' => 'draft',
             'post_type' => self::POST_TYPE,
         );
         $post_id = wp_insert_post($newSubscriber);
-        echo "<p>post id $post_id</p>";
+        // echo "<p>post id $post_id</p>";
         $success = true;
         $validation_key = '';
         if ( $post_id > 0 ){
@@ -167,12 +169,12 @@ class Subscriber {
     public static function validate( $post_id ){
         // Unset validation key
         $status = update_post_meta($post_id, self::POST_NAME.'_validation_key', $value='');
-        echo "<p>update_post_meta status for post id $post_id [";
-        print_r($status);
-        echo "]</p>";
+        // echo "<p>update_post_meta status for post id $post_id [";
+        // print_r($status);
+        // echo "]</p>";
         // Update post status
         if ( $status ){
-            echo "<p>wp_update_post for post id $post_id:</p>";
+            // echo "<p>wp_update_post for post id $post_id:</p>";
             $status = wp_update_post( array(
                 'ID'=>$post_id, 
                 'post_status'=>'publish'
@@ -191,4 +193,5 @@ class Subscriber {
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@()_";
         return substr( str_shuffle( $chars ), 0, $length );
     }
+
 }
