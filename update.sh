@@ -5,12 +5,12 @@
 # Set the plugins and bundle variables to match your setup
 #
 
-# Target plugins folder
-plugins=/Users/steve/Sites/test/wp-content/plugins
+# Target plugins folders
+plugin=/Users/steve/Sites/test/wp-content/plugins/sjd_subscribe_plugin
 
 # Copy the plugin files
-rsync -aru includes ${plugins}/sjd_subscribe_plugin/
-rsync -aru images ${plugins}/sjd_subscribe_plugin/
-rsync -aru readme.md ${plugins}/sjd_subscribe_plugin/
-rsync -aru sjd_subscribe.php ${plugins}/sjd_subscribe_plugin/
-rsync -aru styles.css ${plugins}/sjd_subscribe_plugin/
+rsync -aru includes ${plugin}/
+rsync -aru images ${plugin}/
+rsync -aru readme.md ${plugin}/
+rsync -aru sjd_subscribe.php ${plugin}/
+rsync -aru styles.css ${plugin}/

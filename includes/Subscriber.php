@@ -14,7 +14,7 @@ class Subscriber {
         array("name"=>"validation_key", "title"=>"Validation key", "type"=>"text", "required"=>false),
     );
 
-    public static function register_custom(){
+    public static function init(){
         register_post_type(self::POST_TYPE, array(
             'label' => ucfirst(self::POST_TYPE),
             'singular_label' => ucfirst(self::POST_NAME),

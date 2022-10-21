@@ -1,23 +1,22 @@
-# Timeline Plugin
+# SJD Subscribe Plugin
 
-Timeline is a Wordpress plugin based on the Timeline component built in Svelte.
+This plugin supports capturing subscribers and issuing notifications to subscribers. It uses opt in confirmation and SMTP mail settings to improve deliverability. 
 
 ## Installation
 
-The plugin comprises a single php file and associated svelte bundled code in the assets folder.
-
-To install, copy the required source files (not including the test.sh script) into it's own plugin folder of the same name in a Wordpress application and then Activate as normal.
+To install, copy the required source files (not including the test.sh script) into it's own plugin folder `sjd_subscribe_plugin` 
+and then Activate as normal.
 
 ## Usage
 
-In an post or page insert the required shortcode which has two parameters, a data file url and optional settings:
+Create a page for managing subscriptions which has the `[sjd_subscribe_form]`.
 
-```
-[timeline data="url" settings="s1=x,s2=y,..."]
-```
+## Settings
 
-The plugin enables data files to be uploaded as media files and then referenced directly in the shortcode. However, any url to a valid data file could be provided. If you are concerned about the security risk associated with being able to upload json files then comment out the lines enabling this functionality.
+A Subscriber Settings page is provided and accessible from the main Dashboard menu.
 
-### Settings
+When first setting up a website, set the `message delay` and `emails per block` to conservative values to reduce the frequency of emails sending. This is particularly important if you have a large number of subscribers as you don't want to have yor email marked as spam. As time goes on the delay can be reduce and the block size increased.
 
-@todo
+
+
+

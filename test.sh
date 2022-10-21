@@ -5,18 +5,18 @@
 # Set the plugins and bundle variables to match your setup
 #
 
-# Target plugins folder
-plugins=/Users/steve/Sites/test/wp-content/plugins
+# Target plugins folders
+plugin=/Users/steve/Sites/test/wp-content/plugins/sjd_subscribe_plugin
 
 # Remove the old plugin from the test application
-rm -R ${plugins}/sjd_subscribe_plugin/
+rm -R ${plugin}/
 
 # Make a new test plugins directory
-mkdir ${plugins}/sjd_subscribe_plugin
+mkdir ${plugin}
 
 # Copy the plugin files
-cp -r includes ${plugins}/sjd_subscribe_plugin/
-cp -r images ${plugins}/sjd_subscribe_plugin/
-cp -r readme.md ${plugins}/sjd_subscribe_plugin/
-cp -r sjd_subscribe.php ${plugins}/sjd_subscribe_plugin/
-cp -r styles.css ${plugins}/sjd_subscribe_plugin/
+cp -r includes ${plugin}/
+cp -r images ${plugin}/
+cp -r readme.md ${plugin}/
+cp -r sjd_subscribe.php ${plugin}/
+cp -r styles.css ${plugin}/

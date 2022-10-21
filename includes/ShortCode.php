@@ -3,10 +3,9 @@
 declare(strict_types=1);
 
 
-class UserSubscription {
+class ShortCode {
 
-
-    public static function shortcode(){
+    public static function init(){
         // echo "<h1>Home folder=".get_bloginfo('url')."</h1>";
         // Testing
         $clean = array( "first_name"=>"Steve", "last_name"=>"Davison", "email"=>"stephenjohndavison@gmail.com" );
@@ -35,11 +34,16 @@ class UserSubscription {
         } else {
             // Check for sending notifications
             if ( isset($_REQUEST['notification']) ){
-                $post_id = intval($_REQUEST['notification']);
-                if ( isset($_REQUEST['confirm']) ){
-                    Notifications::send($post_id);
+                // This requires logged in access
+                if ( is_user_logged_in() ){
+                    $post_id = intval($_REQUEST['notification']);
+                    if ( isset($_REQUEST['confirm']) ){
+                        Notifications::send($post_id);
+                    } else {
+                        Notifications::request_confirmation($post_id);
+                    }
                 } else {
-                    Notifications::request_confirmation($post_id);
+                    echo "<h2>File not found</h2>";
                 }
                 return;
             // Check for validation link
@@ -173,8 +177,6 @@ class UserSubscription {
         }
         return false;
     }
-
-
 
 
 }
