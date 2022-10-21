@@ -186,12 +186,97 @@ class Subscriber {
         return $status;
     }
 
+    public static function request_confirmation(){
+        $url = get_option('subscriber_url');
+        echo "<p>You are about to send import subscribers. Click the button below to confirm.</p>";
+        echo "<button><a href='$url?import&confirm'>Import</a></button>";
+    }
+
+
+
     // https://hughlashbrooke.com/2012/04/23/simple-way-to-generate-a-random-password-in-php/
     private static function random_string( $length = 64) {
         // Need to be careful with choice of characters so that all are valid for urls
         // i.e. no ? or #
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@()_";
         return substr( str_shuffle( $chars ), 0, $length );
+    }
+
+    public static function delete_subscribers(){
+        $subscribers = get_posts(array(
+            'numberposts' => -1,
+            'post_type' => self::POST_TYPE
+        ));
+        echo "<p>Deleted the following subscribers:</p><ol>";
+        foreach( $subscribers as $subscriber ){
+            if ( wp_delete_post($subscriber->ID) ){
+                echo "<li>Deleted subscriber $subscriber->post_title</li>";
+            }
+        }
+        echo "</ol>";
+    }
+
+
+    public static function import_subscribers($filename){
+        $handle = fopen($filename,'r') or die('Unable to open file $filename');
+        while (($buffer = fgets($handle, 4096)) !== false) {
+            $parts = explode(',',$buffer);
+            // Ignore first line of titles
+            if ( $parts[0] !== 'email' ){
+                $email = sanitize_email($parts[0]);
+                $first_name = sanitize_text_field($parts[1]);
+                $last_name = sanitize_text_field($parts[2]);
+                $validation_key = '';
+                if ( isset($parts[3]) ){
+                    $validation_key = sanitize_text_field($parts[3]);
+                }
+                $newSubscriber = array(
+                    'post_title' => $email,
+                    'post_status' => 'publish',
+                    'post_type' => self::POST_TYPE,
+                );
+                $post_id = wp_insert_post($newSubscriber);
+                if ( $post_id ){
+                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_email', $email, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_first_name', $first_name, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_last_name', $last_name, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_validation_key', $validation_key, $unique=true);
+                    echo "<p>Added subscriber $first_name $last_name ($email)</p>";
+                }
+            }
+        }
+        fclose($handle);
+    }
+
+    public static function export_subscribers(){
+        $subscribers = get_posts(array(
+            'numberposts' => -1,
+            'post_type' => self::POST_TYPE
+        ));
+        if ( $subscribers ){
+
+            $handle = fopen("downloaded_subscribers.csv", "w") or die("Unable to open file for writing!");
+
+            $title = "email,first_name,last_name,validation_key\n";
+            fwrite($handle,$title);
+
+            foreach( $subscribers as $subscriber){
+                $email = get_post_meta( $subscriber->ID, self::POST_NAME.'_email', $single=true);
+                $first_name = get_post_meta( $subscriber->ID, self::POST_NAME.'_first_name', $single=true);
+                $last_name = get_post_meta( $subscriber->ID, self::POST_NAME.'_last_name', $single=true);
+                $validation_key = get_post_meta( $subscriber->ID, self::POST_NAME.'_validation_key', $single=true);
+
+                $line = "$email,$first_name,$last_name,$validation_key\n";
+                fwrite($handle,$line);
+            }
+
+            $domain = get_bloginfo('url');
+            echo "<p>Exported subscribers - click the following link below to download:</p>";
+            echo "<a href='$domain/downloaded_subscribers.csv' download>Download file</a>";
+
+            fclose($handle);
+        }
+
     }
 
 }
