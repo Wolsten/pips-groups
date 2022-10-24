@@ -1,36 +1,41 @@
-#subscribe {
+#sjd-subscribe {
     display: flex;
     flex-direction: column;
-    align-items: center;
+
+    gap: 1rem;
 }
 
-#subscribe label,
-#subscribe div {
-    width: 360px;
+#sjd-subscribe div.form-field {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    flex-direction: row;
+    width: 360px;
+    justify-content: center;
     align-items: center;
-    margin-top: 1rem;
+    gap: 1rem;
 }
 
-#subscribe label[for=submit] {
+#sjd-subscribe div.form-field.submit {
     justify-content: flex-end;
 }
 
-#subscribe span {
-    width: 100px;
+#sjd-subscribe label {
+    width: 80px;
+    text-align: right;
 }
 
-#subscribe input {
-    width: 260px;
+#sjd-subscribe input {
+    width: 280px;
 }
 
-#subscribe div.error {
+#sjd-subscribe input.error {
+    background-color: pink;
+}
+
+#sjd-subscribe div.error {
     color: red;
 }
 
-#subscribe button {
+#sjd-subscribe button {
     margin-top: 1rem;
     display: block;
     float: right;

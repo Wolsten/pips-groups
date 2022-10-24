@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-class Subscriber {
+class SJD_Subscriber {
 
     public const POST_TYPE = 'subscribers'; // Custom post type
-    public const POST_NAME = 'subscriber';  // Custom post name used as the prefix for custom fields
+    public const POST_PREFIX = 'subscriber';  // Prefix for custom fields
 
     public const CUSTOM_FIELDS = array(
         array("name"=>"first_name", "title"=>"First name", "type"=>"text", "required"=>true),
@@ -17,29 +17,29 @@ class Subscriber {
     public static function init(){
         register_post_type(self::POST_TYPE, array(
             'label' => ucfirst(self::POST_TYPE),
-            'singular_label' => ucfirst(self::POST_NAME),
+            'singular_label' => ucfirst(self::POST_PREFIX),
             'public' => true,
             'show_ui' => true, // UI in admin panel
             'show_in_menu' => true,
             'menu_icon' => 'dashicons-share',
             'capability_type' => 'post',
             'hierarchical' => false,
-            'rewrite' => array("slug" => self::POST_NAME), // Permalinks format
+            'rewrite' => array("slug" => self::POST_PREFIX), // Permalinks format
             'supports' => array('title', 'editor')
         ));
-        add_action('add_meta_boxes', 'Subscriber::add_meta_boxes', 10, 1 );
-        add_action('save_post', 'Subscriber::save_meta_data' );
-        add_filter('manage_'.self::POST_TYPE.'_posts_columns', 'Subscriber::admin_columns', 10, 1 );
-        add_filter('manage_posts_custom_column',  'Subscriber::admin_column', 10, 2);
+        add_action('add_meta_boxes', 'SJD_Subscriber::add_meta_boxes', 10, 1 );
+        add_action('save_post', 'SJD_Subscriber::save_meta_data' );
+        add_filter('manage_'.self::POST_TYPE.'_posts_columns', 'SJD_Subscriber::admin_columns', 10, 1 );
+        add_filter('manage_posts_custom_column',  'SJD_Subscriber::admin_column', 10, 2);
     }
 
     public static function add_meta_boxes($post_type){
         if ( $post_type==self::POST_TYPE ) {
             foreach( self::CUSTOM_FIELDS as $field ){
                 add_meta_box(
-                    $html_id=self::POST_NAME.'_'.$field['name'],
+                    $html_id=self::POST_PREFIX.'_'.$field['name'],
                     $title=$field['title'],
-                    $display_callback=Array('Subscriber','display_meta_box'),
+                    $display_callback=Array('SJD_Subscriber','display_meta_box'),
                     $screen=null, 
                     $context='normal', 
                     $priority='high',
@@ -51,7 +51,7 @@ class Subscriber {
 
     public static function display_meta_box( $post, $args){
         $field = $args['args'][0];
-        $id = self::POST_NAME.'_'.$field['name'];
+        $id = self::POST_PREFIX.'_'.$field['name'];
         $value = esc_attr(get_post_meta( $post->ID, $id, true ));
         echo "<label for='$id'>".$field['title']."</label>";
         echo "&nbsp;<input type='".$field['type']."' id='$id' name='$id' value='$value' size='50' />";
@@ -64,7 +64,7 @@ class Subscriber {
         $post_type=get_post_type($post_id);
         if ( $post_type==self::POST_TYPE ) {
             foreach( self::CUSTOM_FIELDS as $field ){
-                $id = self::POST_NAME.'_'.$field['name'];
+                $id = self::POST_PREFIX.'_'.$field['name'];
                 if ( array_key_exists( $id, $_POST ) ){
                     $data = self::sanitise_field($field['type'], $_POST[$id]);
                     update_post_meta( $post_id, $id, $data );
@@ -83,26 +83,25 @@ class Subscriber {
     public static function validate_fields($inputs){
         $clean = array();
         $errors = array();
-        $success = true;
-        // print_r($inputs);
+        $status = 1;
         foreach( self::CUSTOM_FIELDS as $field ){
             if ( isset($inputs[$field['name']])){
                 $clean[$field['name']] = self::sanitise_field($field,$inputs[$field['name']]);
                 $errors[$field['name']] = '';
                 if ( $field['required'] && $clean[$field['name']] == ''){
                     $errors[$field['name']] = "This value is required";
-                    $success = false;
+                    $status = 0;
                 }
             }
         }
-        return array('clean'=>$clean, 'errors'=>$errors, 'success'=>$success);
+        return array('clean'=>$clean, 'errors'=>$errors, 'status'=>$status);
     }
     
     public static function admin_columns($columns){
         unset($columns['date']);
         foreach( self::CUSTOM_FIELDS as $field ){
             if ( $field['name'] !== 'email'){
-                $columns[self::POST_NAME.'_'.$field['name']] = $field['title'];
+                $columns[self::POST_PREFIX.'_'.$field['name']] = $field['title'];
             }
         }
         $columns['date'] = 'Date';
@@ -118,11 +117,9 @@ class Subscriber {
         if ( $post ){
             // Add meta data to the post object
             $meta = get_post_meta( $post->ID );
-            // print_r('<p>got meta</p>');
-            // print_r($meta);
             if ( $meta ){
                 foreach( $meta as $key=>$value ){
-                    $name = str_replace(self::POST_NAME.'_', '', $key);
+                    $name = str_replace(self::POST_PREFIX.'_', '', $key);
                     $post->$name = $value[0];
                 }
                 return $post;
@@ -132,14 +129,12 @@ class Subscriber {
     }
 
     public static function create( $fields ){
-        // print_r('<p>Fields</p>');
-        // print_r($fields);
-        $newSubscriber = array(
+        $new_subscriber = array(
             'post_title' => $fields['email'],
             'post_status' => 'draft',
             'post_type' => self::POST_TYPE,
         );
-        $post_id = wp_insert_post($newSubscriber);
+        $post_id = wp_insert_post($new_subscriber);
         // echo "<p>post id $post_id</p>";
         $success = true;
         $validation_key = '';
@@ -151,27 +146,26 @@ class Subscriber {
                 } else {
                     $value = $fields[$field['name']];
                 }
-                $meta_id = update_post_meta($post_id, self::POST_NAME.'_'.$field['name'], $value, $unique=true);
+                $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_'.$field['name'], $value, $unique=true);
                 if ( $meta_id === false ){
                     $success = false;
                 }
             }
         }
         if ( $success ){
-            return array(
-                'post_id' => $post_id,
-                'validation_key' => $validation_key
-            );
+            $new_subscriber['ID'] = $post_id;
+            $new_subscriber['first_name'] = $fields['first_name'];
+            $new_subscriber['last_name'] = $fields['last_name'];
+            $new_subscriber['email'] = $fields['email'];
+            $new_subscriber['validation_key'] = $validation_key;
+            return (object) $new_subscriber;
         }
         return false;
     }
 
     public static function validate( $post_id ){
         // Unset validation key
-        $status = update_post_meta($post_id, self::POST_NAME.'_validation_key', $value='');
-        // echo "<p>update_post_meta status for post id $post_id [";
-        // print_r($status);
-        // echo "]</p>";
+        $status = update_post_meta($post_id, self::POST_PREFIX.'_validation_key', $value='');
         // Update post status
         if ( $status ){
             // echo "<p>wp_update_post for post id $post_id:</p>";
@@ -180,17 +174,14 @@ class Subscriber {
                 'post_status'=>'publish'
             ));
             if ( is_wp_error($status) ){
-                $status = false;
+                return false;
             }
+            return true;
         }
-        return $status;
+        return false;
     }
 
-    public static function request_confirmation(){
-        $url = get_option('subscriber_url');
-        echo "<p>You are about to send import subscribers. Click the button below to confirm.</p>";
-        echo "<button><a href='$url?import&confirm'>Import</a></button>";
-    }
+
 
 
 
@@ -237,10 +228,10 @@ class Subscriber {
                 );
                 $post_id = wp_insert_post($newSubscriber);
                 if ( $post_id ){
-                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_email', $email, $unique=true);
-                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_first_name', $first_name, $unique=true);
-                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_last_name', $last_name, $unique=true);
-                    $meta_id = update_post_meta($post_id, self::POST_NAME.'_validation_key', $validation_key, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_email', $email, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_first_name', $first_name, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_last_name', $last_name, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_validation_key', $validation_key, $unique=true);
                     echo "<p>Added subscriber $first_name $last_name ($email)</p>";
                 }
             }
@@ -261,10 +252,10 @@ class Subscriber {
             fwrite($handle,$title);
 
             foreach( $subscribers as $subscriber){
-                $email = get_post_meta( $subscriber->ID, self::POST_NAME.'_email', $single=true);
-                $first_name = get_post_meta( $subscriber->ID, self::POST_NAME.'_first_name', $single=true);
-                $last_name = get_post_meta( $subscriber->ID, self::POST_NAME.'_last_name', $single=true);
-                $validation_key = get_post_meta( $subscriber->ID, self::POST_NAME.'_validation_key', $single=true);
+                $email = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_email', $single=true);
+                $first_name = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_first_name', $single=true);
+                $last_name = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_last_name', $single=true);
+                $validation_key = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_validation_key', $single=true);
 
                 $line = "$email,$first_name,$last_name,$validation_key\n";
                 fwrite($handle,$line);

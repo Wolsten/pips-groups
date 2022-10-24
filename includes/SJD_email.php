@@ -8,7 +8,7 @@
  * For instructions on the use of this script, see:
  * https://butlerblog.com/easy-smtp-email-wordpress-wp_mail/
  * 
- * Values for constants are set in wp-config.php
+ * Values for constants should be set in wp-config.php
  */
 
 if ( defined('SMTP_USER') == false || defined('SMTP_PASS') == false){
