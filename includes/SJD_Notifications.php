@@ -13,7 +13,7 @@ class SJD_Notifications {
         // Get all subscribers
         $subscribers = get_posts(array(
             'numberposts' => -1,
-            'post_type' => Subscriber::POST_TYPE,
+            'post_type' => SJD_Subscriber::POST_TYPE,
             'post_status' => 'publish'
         ));
         $i = 1;
@@ -21,8 +21,8 @@ class SJD_Notifications {
         $delay = get_option('subscriber_message_delay') || 1;
         echo "<ol>";
         foreach( $subscribers as $subscriber ){
-            $first_name = get_post_meta( $subscriber->ID, Subscriber::POST_PREFIX.'_first_name', $single=true);
-            $last_name = get_post_meta( $subscriber->ID, Subscriber::POST_PREFIX.'_last_name', $single=true);
+            $first_name = get_post_meta( $subscriber->ID, SJD_Subscriber::POST_PREFIX.'_first_name', $single=true);
+            $last_name = get_post_meta( $subscriber->ID, SJD_Subscriber::POST_PREFIX.'_last_name', $single=true);
             if ( self::DEBUG_EMAIL != "" ){
                 $email = self::DEBUG_EMAIL;
             } else {
