@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: SJD Subscribe
- * Version: 0.0.4
+ * Version: 0.0.5
  * Author: Steve Davison
  * Description: Provide simple subscription solution to register subscribers and manage 
  * email notifications for when new content is added
  */
 
-DEFINE( "SJD_SUBSCRIBE_VERSION", '0.0.4');
+DEFINE( "SJD_SUBSCRIBE_VERSION", '0.0.5');
 DEFINE( "SJD_SUBSCRIBE_IMAGE", plugins_url('sjd_subscribe_plugin/images/email.jpg'));
 
 REQUIRE_ONCE (plugin_dir_path( __FILE__ ) . 'includes/SJD_email.php');

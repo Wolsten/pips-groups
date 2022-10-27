@@ -58,7 +58,11 @@ class SJD_ShortCode {
                     isset($_REQUEST['email']) ){
 
             if( self::unsubscribe($_REQUEST) == self::STATUS_SUCCESS ){ 
-                echo "<p>Your subscription has been cancelled. You will no longer receive emails notifications when new content is added to the site.</p>";
+                echo "<h2>We are sorry to see you go!</h2>";
+                echo "<p>Your subscription has been cancelled. 
+                         You will no longer receive emails notifications 
+                         when new content is added to the site. You may 
+                         subscribe again at any time.</p>";
             } else {
                 echo "<p>We had a problem cancelling your subscription.</p>";
             }
@@ -77,10 +81,10 @@ class SJD_ShortCode {
     }
 
     private static function user_form( $submitted ){ 
-        $clean = array( "first_name"=>"Steve", "last_name"=>"Davison", "email"=>"stephenjohndavison@gmail.com" );
-        $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
-        // $clean = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
+        // $clean = array( "first_name"=>"Steve", "last_name"=>"Davison", "email"=>"stephenjohndavison@gmail.com" );
         // $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
+        $clean = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
+        $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         $status = self::STATUS_FAILED;
         $resend = false;
         $error = '';
@@ -126,7 +130,7 @@ class SJD_ShortCode {
             }
 
         } ?>
-        <p>Enter details below and then click Register.</p>
+        <p>Enter details below and then click Register. All fields are required.</p>
         <form id="sjd-subscribe" method="post">
             <?php foreach( $clean as $key => $value) { 
                 $label = str_replace('_',' ',$key);

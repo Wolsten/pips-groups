@@ -89,13 +89,13 @@ class SJD_Notifications {
             $message[] = self::header($post->post_title, $img);
             $message[] = "<p>Hi $first_name,</p>";
             $message[] = "<p>Here's an update from <strong>$name</strong>.</p>";
+            $message[] = "<div class='divider'></div>";
             $message[] = str_replace(PHP_EOL,"<br>",$post->post_content);
         } else {
             $message[] = self::header($name, $img);
             $message[] = "<p>Hi $first_name,</p>";
             $message[] = "<p>Here's an update from <strong>$name</strong>.</p>";
             $message[] = "<h2><a href='$link'>$post->post_title</a></h2>";
-            $message[] = "<p>Best wishes from the team at $name</p>";
         }
         $message[] = self::notification_footer($name,$subscriber_id,$email);
         $message = implode($message);
@@ -104,7 +104,9 @@ class SJD_Notifications {
 
     private static function header($name,$img){
         return "<!doctype html>
-            <html xmlns='http://www.w3.org/1999/xhtml' xmlns:v='urn:schemas-microsoft-com:vml' xmlns:o='urn:schemas-microsoft-com:office:office'>
+            <html xmlns='http://www.w3.org/1999/xhtml' 
+                  xmlns:v='urn:schemas-microsoft-com:vml' 
+                  xmlns:o='urn:schemas-microsoft-com:office:office'>
                 <head>
                     <meta charset='UTF-8'>
                     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
@@ -121,9 +123,13 @@ class SJD_Notifications {
                             object-fit: cover;
                         }
                         body > footer {
-                                margin:2rem 0;
-                                padding: 0rem 1rem;
-                                border: 1px solid grey;
+                            margin:2rem 0;
+                            padding: 0rem 1rem;
+                            border: 1px solid grey;
+                        }
+                        .divider {
+                            margin:2rem 0;
+                            border-bottom:1px solid grey;
                         }
                     </style>
                 </head>
