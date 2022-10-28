@@ -5,15 +5,15 @@ declare(strict_types=1);
 
 class SJD_ShortCode {
 
-    public const STATUS_FAILED = 0;
-    public const STATUS_SUCCESS = 1;
-    public const STATUS_ALREADY_APPLIED = -2;
-    public const STATUS_ALREADY_REGISTERED = -3;
-    public const STATUS_COULD_NOT_DELETE_SUBSCRIBER = -4;
-    public const STATUS_SUBSCRIBER_NOT_FOUND = -5;
-    public const STATUS_FAILED_UPDATE_SUBSCRIBER_POST = -6;
-    public const STATUS_FAILED_UPDATE_SUBSCRIBER_META = -7;
-    public const STATUS_ERROR = -99;
+    // public const STATUS_FAILED = 0;
+    // public const STATUS_SUCCESS = 1;
+    // public const STATUS_ALREADY_APPLIED = -2;
+    // public const STATUS_ALREADY_REGISTERED = -3;
+    // public const STATUS_COULD_NOT_DELETE_SUBSCRIBER = -4;
+    // public const STATUS_SUBSCRIBER_NOT_FOUND = -5;
+    // public const STATUS_FAILED_UPDATE_SUBSCRIBER_POST = -6;
+    // public const STATUS_FAILED_UPDATE_SUBSCRIBER_META = -7;
+    // public const STATUS_ERROR = -99;
 
 
     public static function init(){
@@ -39,9 +39,11 @@ class SJD_ShortCode {
                     isset($_REQUEST['key']) && 
                     isset($_REQUEST['email']) ){
 
-            if( self::validate_subscription($_REQUEST) ){ 
+            $subscriber = self::validate_subscription($_REQUEST);
+            if( $subscriber ){ 
                 echo "<p>Your subscription was validated! We will let you know when new content 
                          is added to the site.</p>";
+                SJD_Notifications::send_new_subscriber_email($subscriber);
             } else {
                 echo "<p>We had a problem validating your subscription. 
                          It is possible that the validation link in your email was split 
@@ -57,19 +59,21 @@ class SJD_ShortCode {
                     isset($_REQUEST['id']) && 
                     isset($_REQUEST['email']) ){
 
-            if( self::unsubscribe($_REQUEST) == self::STATUS_SUCCESS ){ 
+            $subscriber = self::unsubscribe($_REQUEST);
+            if( $subscriber ){ 
                 echo "<h2>We are sorry to see you go!</h2>";
                 echo "<p>Your subscription has been cancelled. 
                          You will no longer receive emails notifications 
                          when new content is added to the site. You may 
                          subscribe again at any time.</p>";
+                SJD_Notifications::send_cancelled_subscriber_email($subscriber);
             } else {
                 echo "<p>We had a problem cancelling your subscription.</p>";
             }
             return;
         }
 
-        self::user_form($submit);
+        $subscriber = self::user_form($submit);
     }
 
 
@@ -85,7 +89,7 @@ class SJD_ShortCode {
         // $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         $clean = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
-        $status = self::STATUS_FAILED;
+        // $status = self::STATUS_FAILED;
         $resend = false;
         $error = '';
         if ( $submitted ){
@@ -170,6 +174,7 @@ class SJD_ShortCode {
             echo "<h2>Nearly there $subscriber->first_name!</h2>";
             echo "<p>We've sent you an email to $subscriber->email - please click on the link inside to confirm your subscription.</p>";
             echo "<p>If you don't receive the message in the next few minutes please check your spam folder.</p>";
+            echo "<p>You can help by adding the email address 'notifications at PoliticsInPubs.org.uk' to your address book. Replace the ' at ' with the usual @.</p>";
         }
     }
 
@@ -198,7 +203,9 @@ class SJD_ShortCode {
                 // echo "<p>Email Key = ". $clean['key'] ."</p>";
                 if ( $subscriber->validation_key == $clean['key']){
                     // echo "Keys matched";
-                    return SJD_Subscriber::validate($subscriber->ID);
+                    if ( SJD_Subscriber::validate($subscriber->ID) ){
+                        return $subscriber;
+                    }
                 }
             }
         }
@@ -215,15 +222,12 @@ class SJD_ShortCode {
         if ( $clean['email'] && $clean['user_id'] ){
             $subscriber = SJD_Subscriber::get($clean['email']);
             if ( $subscriber ){
-                if ( $subscriber ){
-                    if( wp_delete_post($subscriber->ID, $force_delete=true) ){
-                        return self::STATUS_SUCCESS;
-                    }
-                    return self::STATUS_COULD_NOT_DELETE_SUBSCRIBER;
+                if( wp_delete_post($subscriber->ID, $force_delete=true) ){
+                    return $subscriber;
                 }
             }
         }
-        return self::STATUS_SUBSCRIBER_NOT_FOUND;
+        return false;
     }
 
     public static function print($label,$value){

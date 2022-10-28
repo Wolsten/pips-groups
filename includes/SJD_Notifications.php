@@ -2,8 +2,8 @@
 
 class SJD_Notifications {
 
-    private const DEBUG_EMAIL = "stephenjohndavison@gmail.com"; // Set to empty string for normal operation
-
+    // private const DEBUG_EMAIL = "stephenjohndavison@gmail.com"; // Set to empty string for normal operation
+    private const DEBUG_EMAIL = "";
 
     public static function send($post_id, $what){
         $post = get_post($post_id);
@@ -30,7 +30,9 @@ class SJD_Notifications {
             }
             if ( self::DEBUG_EMAIL == "" || $i==1 ){
                 if ( self::send_notification_email($subscriber->ID, $first_name, $email, $post, $what) ){
-                    echo "<li>$first_name $last_name ($email)</li>";
+                    if ( $i < 11 ){
+                        echo "<li>$first_name $last_name ($email)</li>";
+                    }
                     if ( $i % $emails == 0 ){
                         sleep($delay);
                     }
@@ -39,6 +41,10 @@ class SJD_Notifications {
             }
         }
         echo "</ol>";
+        if ( $i > 10 ){
+            $i = $i - 10;
+            echo "<p>and $i others</p>";
+        }
         echo "<a href='/wp-admin/post.php?post=$post->ID&action=edit'>Back to post</a>";
         echo "</div>";
     }
@@ -58,7 +64,51 @@ class SJD_Notifications {
         $message[] = "<p>Please <a href='$link'>click here</a> to validate your subscription to 
                          receive updates from <strong>$name</strong>.</p>";
         $message[] = self::subscription_footer($name,$domain);
-        $message = implode($message);
+        $message = implode("",$message);
+        return wp_mail( $email, $subject, $message, $headers);
+    }
+
+
+    public static function send_new_subscriber_email( $subscriber ){
+        // print_r($subscriber);
+        $post_type = SJD_Subscriber::POST_TYPE;
+        $email = get_option('notify_on_subscribe_email');
+        if ( $email == '' ){
+            $email = get_option('admin_email');
+        }
+        $name = get_bloginfo('name');
+        $domain = get_bloginfo('url');
+        $url = get_option('subscriber_url');
+        $subject = "New subscriber to $name";
+        $headers = array("Content-Type: text/html; charset=UTF-8");
+        $img = get_option('subscriber_email_image');
+        $message = array();
+        $message[] = self::header($name, get_option('subscriber_email_image'));
+        $message[] = "<p>You have a new subscriber [$subscriber->ID] $subscriber->first_name $subscriber->last_name ($subscriber->email)</p>";
+        $message[] = "<p>View subscribers <a href='$domain/wp-admin/edit.php?post_type=$post_type'>here</a>. You will need to be logged in.</p>";
+        $message = implode("",$message);
+        return wp_mail( $email, $subject, $message, $headers);
+    }
+
+
+    public static function send_cancelled_subscriber_email( $subscriber ){
+        // print_r($subscriber);
+        $post_type = SJD_Subscriber::POST_TYPE;
+        $email = get_option('notify_on_subscribe_email');
+        if ( $email == '' ){
+            $email = get_option('admin_email');
+        }
+        $name = get_bloginfo('name');
+        $domain = get_bloginfo('url');
+        $url = get_option('subscriber_url');
+        $subject = "Cancelled subscription to $name";
+        $headers = array("Content-Type: text/html; charset=UTF-8");
+        $img = get_option('subscriber_email_image');
+        $message = array();
+        $message[] = self::header($name, get_option('subscriber_email_image'));
+        $message[] = "<p>Subscriber [$subscriber->ID] $subscriber->first_name $subscriber->last_name ($subscriber->email) cancelled their subscription.</p>";
+        $message[] = "<p>View subscribers <a href='$domain/wp-admin/edit.php?post_type=$post_type'>here</a>. You will need to be logged in.</p>";
+        $message = implode("",$message);
         return wp_mail( $email, $subject, $message, $headers);
     }
 
@@ -90,7 +140,13 @@ class SJD_Notifications {
             $message[] = "<p>Hi $first_name,</p>";
             $message[] = "<p>Here's an update from <strong>$name</strong>.</p>";
             $message[] = "<div class='divider'></div>";
-            $message[] = str_replace(PHP_EOL,"<br>",$post->post_content);
+            // Don't add breaks to tagged lines
+            $content = str_replace(">".PHP_EOL,"§§§",$post->post_content);
+            // Add breaks to none-tagged lines
+            $content = str_replace(PHP_EOL,"<br>",$content);
+            // Recover tagged lines
+            $content = str_replace("§§§",">",$content);
+            $message[] = self::pack($content);
         } else {
             $message[] = self::header($name, $img);
             $message[] = "<p>Hi $first_name,</p>";
@@ -98,15 +154,13 @@ class SJD_Notifications {
             $message[] = "<h2><a href='$link'>$post->post_title</a></h2>";
         }
         $message[] = self::notification_footer($name,$subscriber_id,$email);
-        $message = implode($message);
+        $message = implode("",$message);
         return wp_mail( $email, $subject, $message, $headers);
     }
 
     private static function header($name,$img){
-        return "<!doctype html>
-            <html xmlns='http://www.w3.org/1999/xhtml' 
-                  xmlns:v='urn:schemas-microsoft-com:vml' 
-                  xmlns:o='urn:schemas-microsoft-com:office:office'>
+        $html = "<!doctype html>
+            <html xmlns='http://www.w3.org/1999/xhtml' xmlns:v='urn:schemas-microsoft-com:vml' xmlns:o='urn:schemas-microsoft-com:office:office'>
                 <head>
                     <meta charset='UTF-8'>
                     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
@@ -117,28 +171,36 @@ class SJD_Notifications {
                             max-width:600px;
                             font-size: 12pt;
                         }
-                        body > header img {
+                        header img {
                             width:100%;
                             height:200px;
                             object-fit: cover;
                         }
-                        body > footer {
-                            margin:2rem 0;
+                        footer {
+                            margin:60px 0 10px 0;
                             padding: 0rem 1rem;
                             border: 1px solid grey;
                         }
-                        .divider {
-                            margin:2rem 0;
+                        h1, h2, h3 {
+                            padding: 5px 0;
+                            margin: 40px 0 0 0;
+                        }
+                        div.divider {
+                            margin:40px 0;
                             border-bottom:1px solid grey;
+                        }
+                        p.signature {
+                            margin: 40px 0 0 0;
                         }
                     </style>
                 </head>
                 <body>
                     <header><img src='$img'/><h1>$name</h1></header>";
+        return self::pack($html);
     }
 
     private static function subscription_footer($name,$domain){
-        return "<p>Best wishes from the team at $name</p>
+        $html = "<p class='signature'>Best wishes from the team at $name</p>
                 <footer>
                     <p>
                         You have received this email because your details were used to register your interest 
@@ -147,11 +209,12 @@ class SJD_Notifications {
                 </footer>
             </body>
         </html>";
+        return self::pack($html);
     }
 
     private static function notification_footer($name, $subscriber_id,$email){
         $url = get_option('subscriber_url');
-        return "<p>Best wishes from the team at $name</p>
+        $html = "<p class='signature'>Best wishes from the team at $name</p>
                 <footer>
                     <p>
                         To unsubscribe and stop receiving emails from us please 
@@ -160,6 +223,13 @@ class SJD_Notifications {
                 </footer>
             </body>
         </html>";
+        return self::pack($html);
+    }
+
+    private static function pack($html){
+        $html = str_replace(PHP_EOL," ",$html);
+        $html = str_replace("  ", "§", $html);
+        return str_replace("§","",$html);
     }
 
 }

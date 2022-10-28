@@ -83,14 +83,14 @@ class SJD_Subscriber {
     public static function validate_fields($inputs){
         $clean = array();
         $errors = array();
-        $status = 1;
+        $status = true;
         foreach( self::CUSTOM_FIELDS as $field ){
             if ( isset($inputs[$field['name']])){
                 $clean[$field['name']] = self::sanitise_field($field,$inputs[$field['name']]);
                 $errors[$field['name']] = '';
                 if ( $field['required'] && $clean[$field['name']] == ''){
                     $errors[$field['name']] = "This value is required";
-                    $status = 0;
+                    $status = false;
                 }
             }
         }

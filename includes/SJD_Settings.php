@@ -2,6 +2,9 @@
 
 class SJD_Settings {
 
+    private const MAX_EMAILS_PER_BLOCK = 20;
+    private const MAX_SECONDS_BETWEEN_BLOCKS = 10; //secs
+
     private const SETTINGS = array(
         array(
             'name'=>'subscriber_message_delay',
@@ -17,6 +20,10 @@ class SJD_Settings {
         ),
         array(
             'name'=>'subscriber_url',
+            'default' => ''
+        ),
+        array(
+            'name'=>'notify_on_subscribe_email',
             'default' => ''
         )
     );
@@ -44,18 +51,19 @@ class SJD_Settings {
         $subscriber_message_delay = get_option('subscriber_message_delay');
         $subscriber_message_emails = get_option('subscriber_message_emails');
         $subscriber_email_image = get_option('subscriber_email_image');
+        $notify_on_subscribe_email = get_option('notify_on_subscribe_email');
 
         if ( isset($_POST['subscriber_message_delay']) ){
             $subscriber_message_delay = intval($_POST['subscriber_message_delay']);
             if ( $subscriber_message_delay < 1 ) $subscriber_message_delay = 1;
-            if ( $subscriber_message_delay > 10 ) $subscriber_message_delay = 10;
+            if ( $subscriber_message_delay > self::MAX_SECONDS_BETWEEN_BLOCKS ) $subscriber_message_delay = self::MAX_SECONDS_BETWEEN_BLOCKS;
             update_option('subscriber_message_delay', $subscriber_message_delay);
         }
 
         if ( isset($_POST['subscriber_message_emails']) ){
             $subscriber_message_emails = intval($_POST['subscriber_message_emails']);
             if ( $subscriber_message_emails < 1 ) $subscriber_message_emails = 1;
-            if ( $subscriber_message_emails > 10 ) $subscriber_message_emails = 10;
+            if ( $subscriber_message_emails > self::MAX_EMAILS_PER_BLOCK ) $subscriber_message_emails = self::MAX_EMAILS_PER_BLOCK;
             update_option('subscriber_message_emails', $subscriber_message_emails);
         }
 
@@ -64,6 +72,10 @@ class SJD_Settings {
             update_option('subscriber_email_image', $subscriber_email_image);
         }
 
+        if ( isset($_POST['notify_on_subscribe_email']) ){
+            $notify_on_subscribe_email = sanitize_text_field($_POST['notify_on_subscribe_email']);
+            update_option('notify_on_subscribe_email', $notify_on_subscribe_email);
+        }
         
         ?>
 
@@ -72,7 +84,8 @@ class SJD_Settings {
                 display:inline-block;
                 width: 200px;
             }
-            .subscriber-settings input[name=subscriber_email_image] {
+            .subscriber-settings input[name=subscriber_email_image],
+            .subscriber-settings input[name=notify_on_subscribe_email] {
                 width:600px;
             }
             .subscriber-settings img {
@@ -96,13 +109,13 @@ class SJD_Settings {
                 <h2>Email frequency settings</h2>
                 <p>When starting have a larger delay and smaller number of emails per block. This is more important if you have many subscribers, to avoid emails being marked as spam.</p>
                 <p>
-                    <label for="subscriber_message_delay">Message delay (1-10secs)</label>
-                    <input type="number" name="subscriber_message_delay" value="<?=$subscriber_message_delay?>" min="1" max="10"/>
+                    <label for="subscriber_message_delay">Message delay (1-<?=self::MAX_SECONDS_BETWEEN_BLOCKS?>secs)</label>
+                    <input type="number" name="subscriber_message_delay" value="<?=$subscriber_message_delay?>" min="1" max="<?=self::MAX_SECONDS_BETWEEN_BLOCKS?>"/>
                 </p>
 
                 <p>
-                    <label for="subscriber_message_emails">Emails per block (1-10)</label>
-                    <input type="number" name="subscriber_message_emails" value="<?=$subscriber_message_emails?>" min="1" max="10"/>
+                    <label for="subscriber_message_emails">Emails per block (1-<?=self::MAX_EMAILS_PER_BLOCK?>)</label>
+                    <input type="number" name="subscriber_message_emails" value="<?=$subscriber_message_emails?>" min="1" max="<?=self::MAX_EMAILS_PER_BLOCK?>"/>
                 </p>
 
                 <!-- CONTENT SETTINGS -->
@@ -112,6 +125,13 @@ class SJD_Settings {
                 <p>
                     <label for="subscriber_email_image">Emails image <img src="<?=$subscriber_email_image?>" alt="email image"></label>
                     <input type="text" name="subscriber_email_image" value="<?=$subscriber_email_image?>"/>
+                </p>
+
+                <h2>Notify Admin Settings</h2>
+                <p>Choose which email to notify when a new contact subscribes. By default this will be the admin email if one is not set here.</p>
+                <p>
+                    <label for="notify_on_subscribe_email">Notification for new subscriber email</label>
+                    <input type="text" name="notify_on_subscribe_email" value="<?=$notify_on_subscribe_email?>"/>
                 </p>
 
                 <p>

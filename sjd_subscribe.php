@@ -58,13 +58,15 @@ function sjd_post_notify_button(){
 add_action('save_post', 'sjd_post_notify_subscribers');
 function sjd_post_notify_subscribers(){
     global $post;
-    if ( $post->post_status !== 'publish' ) return;
-    if ( $post->post_type === SJD_Subscriber::POST_TYPE ) return;
-    if ( isset($_POST['sjd-notify-subscribers']) == false ) return;
-    $what = $_POST['sjd-notify-subscribers'];
-    if ( $what == 'LINK' || $what == 'PAGE' ){
-        SJD_Notifications::send($post->ID, $what);
-        die();
+        if ( $post ) {
+        if ( $post->post_status !== 'publish' ) return;
+        if ( $post->post_type === SJD_Subscriber::POST_TYPE ) return;
+        if ( isset($_POST['sjd-notify-subscribers']) == false ) return;
+        $what = $_POST['sjd-notify-subscribers'];
+        if ( $what == 'LINK' || $what == 'PAGE' ){
+            SJD_Notifications::send($post->ID, $what);
+            die();
+        }
     }
 }
 
