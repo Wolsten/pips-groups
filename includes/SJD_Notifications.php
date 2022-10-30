@@ -2,8 +2,8 @@
 
 class SJD_Notifications {
 
-    // private const DEBUG_EMAIL = "stephenjohndavison@gmail.com"; // Set to empty string for normal operation
-    private const DEBUG_EMAIL = "";
+    private const DEBUG_EMAIL = "stephenjohndavison@gmail.com"; // Set to empty string for normal operation
+    // private const DEBUG_EMAIL = "";
 
     public static function send($post_id, $what){
         $post = get_post($post_id);
@@ -17,8 +17,11 @@ class SJD_Notifications {
             'post_status' => 'publish'
         ));
         $i = 1;
-        $emails = get_option('subscriber_message_emails') || 1;
-        $delay = get_option('subscriber_message_delay') || 1;
+        $emails = intval(get_option('subscriber_message_emails')) || 1;
+        $delay = intval(get_option('subscriber_message_delay')) || 1;
+        $good = 0;
+        $bad = 0;
+        echo "<p>Sending emails in blocks of $emails emails with a delay of $delay secs between each.</p>";
         echo "<ol>";
         foreach( $subscribers as $subscriber ){
             $first_name = get_post_meta( $subscriber->ID, SJD_Subscriber::POST_PREFIX.'_first_name', $single=true);
@@ -28,23 +31,23 @@ class SJD_Notifications {
             } else {
                 $email=$subscriber->post_title;
             }
-            if ( self::DEBUG_EMAIL == "" || $i==1 ){
-                if ( self::send_notification_email($subscriber->ID, $first_name, $email, $post, $what) ){
-                    if ( $i < 11 ){
-                        echo "<li>$first_name $last_name ($email)</li>";
-                    }
-                    if ( $i % $emails == 0 ){
-                        sleep($delay);
-                    }
-                    $i++;
-                }
+            if ( self::send_notification_email($subscriber->ID, $first_name, $email, $post, $what) ){
+                $good ++;
+                // if ( $i < 11 ) echo "<li>[$subscriber->ID] $first_name $last_name ($email)</li>";
+                if ( $i % $emails == 0 ) sleep($delay);
+            } else {
+                $bad ++;
+                echo "<li style='color:red;'>[$subscriber->ID] $first_name $last_name ($email) - FAILED!</li>";
             }
+            $i++;
         }
         echo "</ol>";
-        if ( $i > 10 ){
-            $i = $i - 10;
-            echo "<p>and $i others</p>";
-        }
+        // if ( $i > 10 ){
+        //     $i = $i - 10;
+        //     echo "<p>and $i others</p>";
+        // }
+        $i --;
+        echo "<p>Tried to send $i emails: $good succeeded, $bad failed.</p>";
         echo "<a href='/wp-admin/post.php?post=$post->ID&action=edit'>Back to post</a>";
         echo "</div>";
     }
