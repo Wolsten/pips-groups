@@ -113,7 +113,7 @@ class SJD_Settings {
                 </p>
 
                 <h2>Notify Admin Settings</h2>
-                <p>Choose which email to notify when a new contact subscribes. By default this will be the admin email if one is not set here.</p>
+                <p>Choose which email to notify when a new contact subscribes or an existing one unsubscribes. By default this will be the admin email if one is not set here.</p>
                 <p>
                     <label for="notify_on_subscribe_email">Notification for new subscriber email</label>
                     <input type="text" name="notify_on_subscribe_email" value="<?=$notify_on_subscribe_email?>"/>

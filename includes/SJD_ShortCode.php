@@ -89,7 +89,6 @@ class SJD_ShortCode {
         // $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         $clean = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
-        // $status = self::STATUS_FAILED;
         $resend = false;
         $error = '';
         if ( $submitted ){
@@ -174,7 +173,8 @@ class SJD_ShortCode {
             echo "<h2>Nearly there $subscriber->first_name!</h2>";
             echo "<p>We've sent you an email to $subscriber->email - please click on the link inside to confirm your subscription.</p>";
             echo "<p>If you don't receive the message in the next few minutes please check your spam folder.</p>";
-            echo "<p>You can help by adding the email address 'notifications at PoliticsInPubs.org.uk' to your address book. Replace the ' at ' with the usual @.</p>";
+            $send_email = str_replace('@', ' AT ', SMTP_USER);
+            echo "<p>You can help by adding the email address <strong>'$send_email'</strong> to your address book. Replace the ' AT ' with the usual '@'.</p>";
         }
     }
 
