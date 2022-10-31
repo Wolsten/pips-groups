@@ -43,13 +43,33 @@ function sjd_post_notify_button(){
     global $post;
     if ( $post->post_status !== 'publish' ) return;
     if ( $post->post_type === SJD_Subscriber::POST_TYPE ) return; ?>
-    <div style="margin-bottom:0.5rem;padding:0.5rem;background-color:#689f68;">
-        <label for="sjd-notify-subscribers" style="color:white;display:inline-block;padding-bottom:0.3rem;">Notify subscribers on save?</label>
+    <style>
+        .sjd-post-notify {
+            margin-bottom:0.5rem;
+            padding:0.5rem;
+            background-color:#689f68;
+
+        }
+        .sjd-post-notify label {
+            margin-top:0.5rem;
+            color:white;
+            display:block;
+            padding-bottom:0.3rem;
+        }
+        .sjd-post-notify p {
+            color:white;
+        }
+    </style>
+    <div class="sjd-post-notify">
+        <label for="sjd-notify-subscribers">Notify subscribers on save?</label>
         <select name="sjd-notify-subscribers" id="sjd-notify-subscribers">
             <option value="false">Do not notify</option>
             <option value="LINK">Send links</option>
             <option value="PAGE">Send full page</option>
         </select>
+        <label for="sjd-min-list-number">Start from list no.</label>
+        <input type="number" name="sjd-min-list-number" id="sjd-min-list-number" value="1" min="1" max="1000"/>
+        <p>Please ignore this for now. Leave the drop down selector set to its default of "Do not notify". Thanks, Steve</p>
     </div>
 <?php }
 
@@ -62,9 +82,11 @@ function sjd_post_notify_subscribers(){
         if ( $post->post_status !== 'publish' ) return;
         if ( $post->post_type === SJD_Subscriber::POST_TYPE ) return;
         if ( isset($_POST['sjd-notify-subscribers']) == false ) return;
+        if ( isset($_POST['sjd-min-list-number']) == false ) ;
+        $min = isset($_POST['sjd-min-list-number']) ? intval($_POST['sjd-min-list-number']) : 1;
         $what = $_POST['sjd-notify-subscribers'];
         if ( $what == 'LINK' || $what == 'PAGE' ){
-            SJD_Notifications::send($post->ID, $what);
+            SJD_Notifications::send($post->ID, $what, $min);
             die();
         }
     }

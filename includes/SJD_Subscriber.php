@@ -1,5 +1,30 @@
 <?php
 
+/* 
+
+IMPORT SUBSCRIBERS
+
+Install the https://wordpress.org/plugins/really-simple-csv-importer/
+and then choose Tools -> Import -> Import CSV
+
+The CSV file must have the following headings on the first row:
+
+post_title  Subscribers email address
+subscriber_email Should be the same as post title
+subscriber_first_name First name
+subscriber_last_name Last name
+post_type Must be set to "subscribers"
+post_status "draft" or "publish"
+
+Others could be included - refer to docs
+
+EXPORT SUBSCRIBERS
+
+@todo a simple exporter to produce a CSV file. In meantime can export using 
+standard wordpress XML exporter from Tools -> Export
+
+*/
+
 declare(strict_types=1);
 
 class SJD_Subscriber {
@@ -181,6 +206,18 @@ class SJD_Subscriber {
         return false;
     }
 
+    public static function all(){
+        $subscribers = get_posts(array(
+            'numberposts' => -1,
+            'post_type' => self::POST_TYPE,
+            'post_status' => 'publish'
+        ));
+        foreach( $subscribers as $subscriber ){
+            $subscriber->first_name = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_first_name', $single=true);
+            $subscriber->last_name = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_last_name', $single=true);
+        }
+        return $subscribers;
+    }
 
 
 

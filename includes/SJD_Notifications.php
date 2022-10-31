@@ -1,56 +1,81 @@
 <?php 
 
+
+/* Ionos Mail Limits
+
+The number of emails per hour per contract depends on the age of the mailbox being used:
+
+Days    Per hour
+0-7        50
+8-14      100
+15-30     400
+30+     5,000
+
+Therefore, need to plan in advance or consider blind copying to multiple recipients, for
+which there is a limit of 200 per email. */
+
+// show wp_mail() errors
+add_action( 'wp_mail_failed', 'onMailError', 10, 1 );
+function onMailError( $wp_error ) {
+    echo "<pre>";
+    print_r($wp_error->errors);
+    // A typical error looks like this:
+    // SMTP Error: The following recipients failed: leaversofburnley@gmail.com: Requested mail action not taken: mailbox unavailable
+    // Mail send limit exceeded.
+    echo "</pre>";
+}  
+
 class SJD_Notifications {
+    // private const DEBUG_EMAIL = "stephenjohndavison@gmail.com"; // Set to empty string for normal operation
+    private const DEBUG_EMAIL = "";
 
-    private const DEBUG_EMAIL = "stephenjohndavison@gmail.com"; // Set to empty string for normal operation
-    // private const DEBUG_EMAIL = "";
-
-    public static function send($post_id, $what){
+    public static function send($post_id, $what, $min){
         $post = get_post($post_id);
         echo "<div style='margin:2rem;'>";
         echo "<h1>Sending notifications</h1>";
-        echo "<p>Sending $what notification emails for post [$post_id] <strong>$post->post_title</strong> to:</p>";
+        echo "<p>Sending $what notification emails for post [$post_id] <strong>$post->post_title</strong></p>";
         // Get all subscribers
-        $subscribers = get_posts(array(
-            'numberposts' => -1,
-            'post_type' => SJD_Subscriber::POST_TYPE,
-            'post_status' => 'publish'
-        ));
-        $i = 1;
-        $emails = intval(get_option('subscriber_message_emails')) || 1;
-        $delay = intval(get_option('subscriber_message_delay')) || 1;
+        $subscribers = SJD_Subscriber::all();
+        $i = 0;
+        $skipped = 0;
         $good = 0;
         $bad = 0;
-        echo "<p>Sending emails in blocks of $emails emails with a delay of $delay secs between each.</p>";
+        $stop_on_first_fail = (bool) get_option('subscriber_stop_on_first_fail')=='1';
+        echo "<p>Sending emails, skipping those below $min.</p>";
         echo "<ol>";
         foreach( $subscribers as $subscriber ){
-            $first_name = get_post_meta( $subscriber->ID, SJD_Subscriber::POST_PREFIX.'_first_name', $single=true);
-            $last_name = get_post_meta( $subscriber->ID, SJD_Subscriber::POST_PREFIX.'_last_name', $single=true);
+            $i++;
             if ( self::DEBUG_EMAIL != "" ){
                 $email = self::DEBUG_EMAIL;
             } else {
                 $email=$subscriber->post_title;
             }
-            if ( self::send_notification_email($subscriber->ID, $first_name, $email, $post, $what) ){
-                $good ++;
-                // if ( $i < 11 ) echo "<li>[$subscriber->ID] $first_name $last_name ($email)</li>";
-                if ( $i % $emails == 0 ) sleep($delay);
-            } else {
-                $bad ++;
-                echo "<li style='color:red;'>[$subscriber->ID] $first_name $last_name ($email) - FAILED!</li>";
+            $entry = "[$subscriber->ID] $subscriber->first_name $subscriber->last_name ($email)";
+            if ( $i < $min ){
+                $skipped ++;
+                echo "<li>$entry - SKIPPED</li>";
+            } else if ($bad==0 || $stop_on_first_fail==false ) {
+                $status = self::send_notification_email($subscriber->ID, $subscriber->first_name, $email, $post, $what);
+                if ( $status ){
+                    $good ++;
+                    echo "<li style='color:green;'>$entry - SENT</li>";
+                } else {
+                    $bad ++;
+                    echo "<li style='color:red;'>$entry - FAILED!</li>";
+                }
             }
-            $i++;
         }
-        echo "</ol>";
+        echo "</ol>";// 
         // if ( $i > 10 ){
         //     $i = $i - 10;
         //     echo "<p>and $i others</p>";
         // }
-        $i --;
         echo "<p>Tried to send $i emails: $good succeeded, $bad failed.</p>";
         echo "<a href='/wp-admin/post.php?post=$post->ID&action=edit'>Back to post</a>";
         echo "</div>";
     }
+
+
 
 
     public static function send_subscribe_email( $subscriber_id, $first_name, $email, $validation_key){
@@ -220,8 +245,7 @@ class SJD_Notifications {
         $html = "<p class='signature'>Best wishes from the team at $name</p>
                 <footer>
                     <p>
-                        To unsubscribe and stop receiving emails from us please 
-                        <a href='$url?unsubscribe&id=$subscriber_id&email=$email'>click here</a>.
+                        To unsubscribe and stop receiving emails from us please <a href='$url?unsubscribe&id=$subscriber_id&email=$email'>click here</a>.
                     </p>
                 </footer>
             </body>

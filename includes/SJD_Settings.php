@@ -3,16 +3,13 @@
 class SJD_Settings {
 
     private const MAX_EMAILS_PER_BLOCK = 20;
+    private const MIN_SECONDS_BETWEEN_BLOCKS = 0.1; //secs
     private const MAX_SECONDS_BETWEEN_BLOCKS = 10; //secs
 
     private const SETTINGS = array(
         array(
-            'name'=>'subscriber_message_delay',
-            'default' => 10
-        ),
-        array(
-            'name'=>'subscriber_messages_emails',
-            'default' => 10
+            'name'=>'subscriber_stop_on_first_fail',
+            'default' => 1
         ),
         array(
             'name'=>'subscriber_email_image',
@@ -48,23 +45,13 @@ class SJD_Settings {
     }
 
     public static function page(){ 
-        $subscriber_message_delay = get_option('subscriber_message_delay');
-        $subscriber_message_emails = get_option('subscriber_message_emails');
+        $subscriber_stop_on_first_fail = get_option('subscriber_stop_on_first_fail') == '1';
         $subscriber_email_image = get_option('subscriber_email_image');
         $notify_on_subscribe_email = get_option('notify_on_subscribe_email');
 
-        if ( isset($_POST['subscriber_message_delay']) ){
-            $subscriber_message_delay = intval($_POST['subscriber_message_delay']);
-            if ( $subscriber_message_delay < 1 ) $subscriber_message_delay = 1;
-            if ( $subscriber_message_delay > self::MAX_SECONDS_BETWEEN_BLOCKS ) $subscriber_message_delay = self::MAX_SECONDS_BETWEEN_BLOCKS;
-            update_option('subscriber_message_delay', $subscriber_message_delay);
-        }
-
-        if ( isset($_POST['subscriber_message_emails']) ){
-            $subscriber_message_emails = intval($_POST['subscriber_message_emails']);
-            if ( $subscriber_message_emails < 1 ) $subscriber_message_emails = 1;
-            if ( $subscriber_message_emails > self::MAX_EMAILS_PER_BLOCK ) $subscriber_message_emails = self::MAX_EMAILS_PER_BLOCK;
-            update_option('subscriber_message_emails', $subscriber_message_emails);
+        if ( isset($_POST['subscriber_stop_on_first_fail']) ){
+            $subscriber_stop_on_first_fail = $_POST['subscriber_stop_on_first_fail'] == '1';
+            update_option('subscriber_stop_on_first_fail', $subscriber_stop_on_first_fail);
         }
 
         if ( isset($_POST['subscriber_email_image']) ){
@@ -105,17 +92,15 @@ class SJD_Settings {
             <form method="post">
             <?php settings_fields('subscriber-settings-group'); ?>
 
-                <!-- FREQUENCY SETTINGS -->
-                <h2>Email frequency settings</h2>
-                <p>When starting have a larger delay and smaller number of emails per block. This is more important if you have many subscribers, to avoid emails being marked as spam.</p>
+                <!-- HANDLE FAIL SETTING -->
+                <h2>Handle failures</h2>
+                <p>Choose whether to stop on first email failure or keep going.</p>
                 <p>
-                    <label for="subscriber_message_delay">Message delay (1-<?=self::MAX_SECONDS_BETWEEN_BLOCKS?>secs)</label>
-                    <input type="number" name="subscriber_message_delay" value="<?=$subscriber_message_delay?>" min="1" max="<?=self::MAX_SECONDS_BETWEEN_BLOCKS?>"/>
-                </p>
-
-                <p>
-                    <label for="subscriber_message_emails">Emails per block (1-<?=self::MAX_EMAILS_PER_BLOCK?>)</label>
-                    <input type="number" name="subscriber_message_emails" value="<?=$subscriber_message_emails?>" min="1" max="<?=self::MAX_EMAILS_PER_BLOCK?>"/>
+                    <label for="subscriber_stop_on_first_fail">Stop on first fail</label>
+                    <input type="radio" name="subscriber_stop_on_first_fail" 
+                           value="1" <?=$subscriber_stop_on_first_fail ? 'checked' : ''?>/> On
+                    <input type="radio" name="subscriber_stop_on_first_fail" 
+                           value="0" <?=$subscriber_stop_on_first_fail==false ? 'checked' : ''?>/> Off
                 </p>
 
                 <!-- CONTENT SETTINGS -->
@@ -139,43 +124,7 @@ class SJD_Settings {
                 </p>
             </form>
 
-            <br><br>
-            <h2>Other operations</h2>
 
-            <!-- IMPORT -->
-            <h3>Import Subscribers</h3>
-            <p>
-                Install the <a href="https://wordpress.org/plugins/really-simple-csv-importer/">Really Simple CSV Importer</a> 
-                and then choose <a href="/wp-admin/admin.php?import=csv">CSV Import</a> in Tools->Import. The CSV file must have the following headings on the first row:</p>
-            <table>
-                <tbody>
-                    <tr>
-                        <th>Heading</th><td>Row Content</td>
-                    </tr>
-                    <tr>
-                        <th>post_title</th><td>Subscribers email address</td>
-                    </tr>
-                    <tr>
-                        <th>subscriber_email</th><td>Should be the same as post title</td>
-                    </tr>
-                    <tr>
-                        <th>subscriber_first_name</th><td>First name</td>
-                    </tr>
-                    <tr>
-                        <th>subscriber_last_name</th><td>Last name</td>
-                    </tr>
-                    <tr>
-                        <th>post_type</th><td>Must be set to "subscribers"</td>
-                    </tr>
-                    <tr>
-                        <th>post_status</th><td>"draft" or "publish"</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <!-- EXPORT -->
-            <h3>Export Subscribers</h3>
-            <p>Exporting subscribers can be done using the standard Wordpress XMP exporter, found under Tools->Export.</p>
         </div>
     <?php }
 }
