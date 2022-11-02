@@ -34,6 +34,18 @@ class SJD_Notifications {
         echo "<div style='margin:2rem;'>";
         echo "<h1>Sending notifications</h1>";
         echo "<p>Sending $what notification emails for post [$post_id] <strong>$post->post_title</strong></p>";
+        // Check for shortcodes in the content
+        if ( $what=='PAGE' ){
+            $re = '/^\[.{5,}\]/m';
+            $str = $post->post_content;
+            if ( preg_match($re, $str)==1 ){
+                echo "<p>Could not send this content because it looks like it contains at least one shortcode, e.g. [name ....].</p>";
+                echo "<p>You cannot send page content with embedded shortcodes as they may generate dynamic content that is not available except via the web page.</p>";
+                echo "<a href='/wp-admin/post.php?post=$post->ID&action=edit'>Back to post</a>";
+                echo "</div>";
+                return;
+            }
+        }
         // Get all subscribers
         $subscribers = SJD_Subscriber::all();
         $i = 0;
@@ -66,10 +78,6 @@ class SJD_Notifications {
             }
         }
         echo "</ol>";// 
-        // if ( $i > 10 ){
-        //     $i = $i - 10;
-        //     echo "<p>and $i others</p>";
-        // }
         echo "<p>Tried to send $i emails: $good succeeded, $bad failed.</p>";
         echo "<a href='/wp-admin/post.php?post=$post->ID&action=edit'>Back to post</a>";
         echo "</div>";
@@ -147,7 +155,7 @@ class SJD_Notifications {
         // Send in html format
         $headers = array("Content-Type: text/html; charset=UTF-8");
         $subject = "New content added to $name";
-        $link = "$domain/$post->POST_PREFIX";
+        $link = "$domain/$post->post_name";
         // Default image
         $img = SJD_SUBSCRIBE_IMAGE;
         $debug = "";
@@ -168,8 +176,13 @@ class SJD_Notifications {
             $message[] = "<p>Hi $first_name,</p>";
             $message[] = "<p>Here's an update from <strong>$name</strong>.</p>";
             $message[] = "<div class='divider'></div>";
+            $content = $post->post_content;
+            // Remove any short codes - \n[xxxx]\n i.e. must start and end on one line
+            $regex = '/^\[.+\]$/m';
+            $replace = '';
+            $content = preg_replace($regex, $replace, $content); 
             // Don't add breaks to tagged lines
-            $content = str_replace(">".PHP_EOL,"§§§",$post->post_content);
+            $content = str_replace(">".PHP_EOL,"§§§",$content);
             // Add breaks to none-tagged lines
             $content = str_replace(PHP_EOL,"<br>",$content);
             // Recover tagged lines
@@ -178,25 +191,30 @@ class SJD_Notifications {
         } else {
             $message[] = self::header($name, $img);
             $message[] = "<p>Hi $first_name,</p>";
-            $message[] = "<p>Here's an update from <strong>$name</strong>.</p>";
-            $message[] = "<h2><a href='$link'>$post->post_title</a></h2>";
+            $message[] = "<p>We have just added a new post:</p>";
+            $message[] = "<div class='main-content'>";
+            $message[] = "<h1><a href='$link'>$post->post_title</a></h1>";
+            $message[] = "<p>$post->post_excerpt</p>";
+            $message[] = "</div>";
         }
         $message[] = self::notification_footer($name,$subscriber_id,$email);
         $message = implode("",$message);
+        // echo $message;
+        // return true;
         return wp_mail( $email, $subject, $message, $headers);
     }
 
     private static function header($name,$img){
+        $primary_colour = get_option('subscriber_email_primary_colour');
         $html = "<!doctype html>
             <html xmlns='http://www.w3.org/1999/xhtml' xmlns:v='urn:schemas-microsoft-com:vml' xmlns:o='urn:schemas-microsoft-com:office:office'>
                 <head>
                     <meta charset='UTF-8'>
                     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
                     <meta name='viewport' content='width=device-width, initial-scale=1'>
-                    <title>{$name}</title>
+                    <title>$name</title>
                     <style>
                         body {
-                            max-width:600px;
                             font-size: 12pt;
                         }
                         header img {
@@ -204,18 +222,43 @@ class SJD_Notifications {
                             height:200px;
                             object-fit: cover;
                         }
+                        header .site-name {
+                            font-size:24pt;
+                            text-align:center;
+                            padding: 10px;
+                            margin: 10px 0 0 0;
+                            border: 1px solid lightgrey;
+                            color:$primary_colour;
+                        }
                         footer {
-                            margin:60px 0 10px 0;
+                            margin:40px 0 10px 0;
                             padding: 0rem 1rem;
-                            border: 1px solid grey;
+                            border: 1px solid lightgrey;
                         }
                         h1, h2, h3 {
                             padding: 5px 0;
-                            margin: 40px 0 0 0;
+                            margin: 20px 0 0 0;
+                            color:$primary_colour;
+                        }
+                        h1 {
+                            text-align:center;
+
+                        }
+                        h1 a {
+                            text-decoration:none;
+                            color:$primary_colour;
+                        }
+                        div.main-content {
+                            margin:40px 10% 40px 10%;
+                            padding: 10px;
+                            border: 1px solid lightgrey;
+                        }
+                        div.main-content * {
+                            text-align:center;
                         }
                         div.divider {
                             margin:40px 0;
-                            border-bottom:1px solid grey;
+                            border-bottom:1px solid lightgrey;
                         }
                         p.signature {
                             margin: 40px 0 0 0;
@@ -223,12 +266,15 @@ class SJD_Notifications {
                     </style>
                 </head>
                 <body>
-                    <header><img src='$img'/><h1>$name</h1></header>";
+                    <header>
+                        <div class='site-name'>$name</div>
+                        <img src='$img'/>
+                    </header>";
         return self::pack($html);
     }
 
     private static function subscription_footer($name,$domain){
-        $html = "<p class='signature'>Best wishes from the team at $name</p>
+        $html = "<p class='signature'>Best wishes from the team at $name.</p>
                 <footer>
                     <p>
                         You have received this email because your details were used to register your interest 
@@ -242,7 +288,13 @@ class SJD_Notifications {
 
     private static function notification_footer($name, $subscriber_id,$email){
         $url = get_option('subscriber_url');
-        $html = "<p class='signature'>Best wishes from the team at $name</p>
+        $html = "<h3>Please share</h3>
+                <p>
+                    If you enjoy reading this and please do share with others. New visitors can <a href='$url'>click here</a> to subscribe to our newsletter.
+                </p>
+                <p class='signature'>
+                    Best wishes from the team at $name.
+                </p>
                 <footer>
                     <p>
                         To unsubscribe and stop receiving emails from us please <a href='$url?unsubscribe&id=$subscriber_id&email=$email'>click here</a>.

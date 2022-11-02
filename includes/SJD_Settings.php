@@ -2,10 +2,6 @@
 
 class SJD_Settings {
 
-    private const MAX_EMAILS_PER_BLOCK = 20;
-    private const MIN_SECONDS_BETWEEN_BLOCKS = 0.1; //secs
-    private const MAX_SECONDS_BETWEEN_BLOCKS = 10; //secs
-
     private const SETTINGS = array(
         array(
             'name'=>'subscriber_stop_on_first_fail',
@@ -14,6 +10,10 @@ class SJD_Settings {
         array(
             'name'=>'subscriber_email_image',
             'default' => SJD_SUBSCRIBE_IMAGE
+        ),
+        array(
+            'name'=>'subscriber_email_primary_colour',
+            'default' => 'gray'
         ),
         array(
             'name'=>'subscriber_url',
@@ -47,6 +47,7 @@ class SJD_Settings {
     public static function page(){ 
         $subscriber_stop_on_first_fail = get_option('subscriber_stop_on_first_fail') == '1';
         $subscriber_email_image = get_option('subscriber_email_image');
+        $subscriber_email_primary_colour = get_option('subscriber_email_primary_colour');
         $notify_on_subscribe_email = get_option('notify_on_subscribe_email');
 
         if ( isset($_POST['subscriber_stop_on_first_fail']) ){
@@ -62,6 +63,11 @@ class SJD_Settings {
         if ( isset($_POST['notify_on_subscribe_email']) ){
             $notify_on_subscribe_email = sanitize_text_field($_POST['notify_on_subscribe_email']);
             update_option('notify_on_subscribe_email', $notify_on_subscribe_email);
+        }
+
+        if ( isset($_POST['subscriber_email_primary_colour']) ){
+            $subscriber_email_primary_colour = sanitize_text_field($_POST['subscriber_email_primary_colour']);
+            update_option('subscriber_email_primary_colour', $subscriber_email_primary_colour);
         }
         
         ?>
@@ -110,6 +116,12 @@ class SJD_Settings {
                 <p>
                     <label for="subscriber_email_image">Emails image <img src="<?=$subscriber_email_image?>" alt="email image"></label>
                     <input type="text" name="subscriber_email_image" value="<?=$subscriber_email_image?>"/>
+                </p>
+
+                <p>Choose a primary colour for titles. Can be any valid html colour name or value.</p>
+                <p>
+                    <label for="subscriber_email_primary_colour">Primary colour</label>
+                    <input type="text" name="subscriber_email_primary_colour" value="<?=$subscriber_email_primary_colour?>"/>
                 </p>
 
                 <h2>Notify Admin Settings</h2>

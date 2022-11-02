@@ -5,17 +5,6 @@ declare(strict_types=1);
 
 class SJD_ShortCode {
 
-    // public const STATUS_FAILED = 0;
-    // public const STATUS_SUCCESS = 1;
-    // public const STATUS_ALREADY_APPLIED = -2;
-    // public const STATUS_ALREADY_REGISTERED = -3;
-    // public const STATUS_COULD_NOT_DELETE_SUBSCRIBER = -4;
-    // public const STATUS_SUBSCRIBER_NOT_FOUND = -5;
-    // public const STATUS_FAILED_UPDATE_SUBSCRIBER_POST = -6;
-    // public const STATUS_FAILED_UPDATE_SUBSCRIBER_META = -7;
-    // public const STATUS_ERROR = -99;
-
-
     public static function init(){
 
         update_option('subscriber_url', self::get_subscriber_url());
