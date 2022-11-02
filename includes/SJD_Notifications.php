@@ -40,7 +40,7 @@ class SJD_Notifications {
             $str = $post->post_content;
             if ( preg_match($re, $str)==1 ){
                 echo "<p>Could not send this content because it looks like it contains at least one shortcode, e.g. [name ....].</p>";
-                echo "<p>You cannot send page content with embedded shortcodes as they may generate dynamic content that is not available except via the web page.</p>";
+                echo "<p>You cannot send page content with embedded shortcodes as they may generate dynamic content that is not available except via the web page but you can send as a link instead.</p>";
                 echo "<a href='/wp-admin/post.php?post=$post->ID&action=edit'>Back to post</a>";
                 echo "</div>";
                 return;
