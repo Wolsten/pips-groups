@@ -22,6 +22,10 @@ class SJD_Settings {
         array(
             'name'=>'notify_on_subscribe_email',
             'default' => ''
+        ),
+        array(
+            'name'=>'subscriber_location',
+            'default' => 0
         )
     );
 
@@ -49,10 +53,16 @@ class SJD_Settings {
         $subscriber_email_image = get_option('subscriber_email_image');
         $subscriber_email_primary_colour = get_option('subscriber_email_primary_colour');
         $notify_on_subscribe_email = get_option('notify_on_subscribe_email');
+        $subscriber_location = get_option('subscriber_location');
 
         if ( isset($_POST['subscriber_stop_on_first_fail']) ){
             $subscriber_stop_on_first_fail = $_POST['subscriber_stop_on_first_fail'] == '1';
             update_option('subscriber_stop_on_first_fail', $subscriber_stop_on_first_fail);
+        }
+
+        if ( isset($_POST['subscriber_location']) ){
+            $subscriber_location = $_POST['subscriber_location'] == '1';
+            update_option('subscriber_location', $subscriber_location);
         }
 
         if ( isset($_POST['subscriber_email_image']) ){
@@ -124,6 +134,19 @@ class SJD_Settings {
                     <input type="text" name="subscriber_email_primary_colour" value="<?=$subscriber_email_primary_colour?>"/>
                 </p>
 
+                <!-- ADDITIONAL DATA COLLECTION SETTINGS -->
+                <h2>Additional data collection settings</h2>
+                <p>Choose whether to (try to) collect the subscriber location</p>
+                <p>
+                <label for="subscriber_location">Subscriber location</label>
+                    <input type="radio" name="subscriber_location" 
+                           value="1" <?=$subscriber_location ? 'checked' : ''?>/> Yes
+                    <input type="radio" name="subscriber_location" 
+                           value="0" <?=$subscriber_location==false ? 'checked' : ''?>/> No
+                </p>
+
+
+                <!-- ADMIN SETTINGS -->
                 <h2>Notify Admin Settings</h2>
                 <p>Choose which email to notify when a new contact subscribes or an existing one unsubscribes. By default this will be the admin email if one is not set here.</p>
                 <p>

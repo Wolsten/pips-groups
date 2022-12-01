@@ -96,7 +96,9 @@ class SJD_Notifications {
         $img = get_option('subscriber_email_image');
         $message = array();
         $message[] = self::header($name, get_option('subscriber_email_image'));
+        $message[] = "<br>";
         $message[] = "<p>Hi $first_name,</p>";
+        $message[] = "<br>";
         $message[] = "<p>Please <a href='$link'>click here</a> to validate your subscription to 
                          receive updates from <strong>$name</strong>.</p>";
         $message[] = self::subscription_footer($name,$domain);
@@ -120,7 +122,7 @@ class SJD_Notifications {
         $img = get_option('subscriber_email_image');
         $message = array();
         $message[] = self::header($name, get_option('subscriber_email_image'));
-        $message[] = "<p>You have a new subscriber [$subscriber->ID] $subscriber->first_name $subscriber->last_name ($subscriber->email)</p>";
+        $message[] = "<p>You have a new subscriber [$subscriber->ID] $subscriber->first_name $subscriber->last_name ($subscriber->email), located in $subscriber->location</p>";
         $message[] = "<p>View subscribers <a href='$domain/wp-admin/edit.php?post_type=$post_type'>here</a>. You will need to be logged in.</p>";
         $message = implode("",$message);
         return wp_mail( $email, $subject, $message, $headers);
@@ -173,7 +175,9 @@ class SJD_Notifications {
         
         if ( $what === 'PAGE' ){
             $message[] = self::header($post->post_title, $img);
+            $message[] = "<br>";
             $message[] = "<p>Hi $first_name,</p>";
+            $message[] = "<br>";
             $message[] = "<p>Here's an update from <strong>$name</strong>.</p>";
             $message[] = "<div class='divider'></div>";
             $content = $post->post_content;
@@ -205,7 +209,16 @@ class SJD_Notifications {
     }
 
     private static function header($name,$img){
-        $primary_colour = get_option('subscriber_email_primary_colour');
+        // Site logo
+        $logo = "";
+        if ( function_exists('sjd_config') ){ 
+            $logo = sjd_config('logo');
+            if ( str_contains($logo,"img") === false ){
+                $logo = "";
+            } else {
+                $logo = "<div class='site-logo'>$logo</div>";
+            }
+        }
         $html = "<!doctype html>
             <html xmlns='http://www.w3.org/1999/xhtml' xmlns:v='urn:schemas-microsoft-com:vml' xmlns:o='urn:schemas-microsoft-com:office:office'>
                 <head>
@@ -213,64 +226,94 @@ class SJD_Notifications {
                     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
                     <meta name='viewport' content='width=device-width, initial-scale=1'>
                     <title>$name</title>
-                    <style>
-                        body {
-                            font-size: 12pt;
-                        }
-                        header img {
-                            width:100%;
-                            height:200px;
-                            object-fit: cover;
-                        }
-                        header .site-name {
-                            font-size:24pt;
-                            text-align:center;
-                            padding: 10px;
-                            margin: 10px 0 0 0;
-                            border: 1px solid lightgrey;
-                            color:$primary_colour;
-                        }
-                        footer {
-                            margin:40px 0 10px 0;
-                            padding: 0rem 1rem;
-                            border: 1px solid lightgrey;
-                        }
-                        h1, h2, h3 {
-                            padding: 5px 0;
-                            margin: 20px 0 0 0;
-                            color:$primary_colour;
-                        }
-                        h1 {
-                            text-align:center;
-
-                        }
-                        h1 a {
-                            text-decoration:none;
-                            color:$primary_colour;
-                        }
-                        div.main-content {
-                            margin:40px 10% 40px 10%;
-                            padding: 10px;
-                            border: 1px solid lightgrey;
-                        }
-                        div.main-content * {
-                            text-align:center;
-                        }
-                        div.divider {
-                            margin:40px 0;
-                            border-bottom:1px solid lightgrey;
-                        }
-                        p.signature {
-                            margin: 40px 0 0 0;
-                        }
-                    </style>
-                </head>
-                <body>
+                </head>";
+         $html .= self::style();
+         $html .= "<body>
                     <header>
+                        $logo
                         <div class='site-name'>$name</div>
-                        <img src='$img'/>
+                        <img class='header-image' src='$img'/>
                     </header>";
         return self::pack($html);
+    }
+
+    private static function style(){
+        $primary_colour = get_option('subscriber_email_primary_colour');
+        return "<style>
+            body {
+                font-size: 12pt;
+                line-height: 1.5em;
+            }
+            header .site-logo {
+                text-align:center;
+            }
+            header .site-logo img {
+                width:120pt;
+                height:auto;
+            }
+            header img.header-image {
+                width:100%;
+                height:200px;
+                object-fit: cover;
+            }
+            header .site-name {
+                font-size:24pt;
+                line-height: 32pt;
+                text-align:center;
+                padding: 20pt;
+                margin: 0;
+                XXXborder: 1px solid lightgrey;
+                color:$primary_colour;
+                text-transform: uppercase;
+            }
+            footer {
+                margin:20pt 0 5pt 0;
+                padding: 10pt;
+                border: 1px solid lightgrey;
+                text-align:center;
+            }
+            h1, h2, h3 {
+                padding: 0;
+                margin: 0;
+                line-height: 1.5em;
+                color:$primary_colour;
+            }
+            h1 {
+                text-align:center;
+            }
+            h1 a {
+                text-decoration:none;
+                color:$primary_colour;
+            }
+            div.main-content {
+                margin:40px 10% 40px 10%;
+                padding: 10px;
+                border: 1px solid lightgrey;
+            }
+            div.main-content * {
+                text-align:center;
+            }
+            div.divider {
+                margin:40px 0;
+                border-bottom:1px solid lightgrey;
+            }
+            p {
+                padding:0;
+                margin:0;
+            }
+            p.signature {
+                margin: 40pt 0 0 0;
+                
+            }
+            blockquote {
+                font-style:italic;
+                margin:20pt 0 0 0;
+                padding: 10pt 20pt; 
+            }
+            h3.share {
+                margin-top:30pt;
+            }
+        </style>";
     }
 
     private static function subscription_footer($name,$domain){
@@ -288,10 +331,23 @@ class SJD_Notifications {
 
     private static function notification_footer($name, $subscriber_id,$email){
         $url = get_option('subscriber_url');
-        $html = "<h3>Please share</h3>
+        $twitter = '';
+        if ( function_exists('sjd_config') ){ 
+            $twitter = sjd_config('twitter-handle');
+            if ( str_contains($twitter,"@") === false ){
+                $twitter = "";
+            } else {
+                $slug = str_replace('@','',$twitter);
+                $twitter = "<br/><p>You may also want to follow us on Twitter at <a href='https://twitter.com/$slug'>$twitter</a>.</p>";
+            }
+        }
+
+        $html = "<h3 class='share'>Please share</h3>
+                <br/>
                 <p>
                     If you enjoy reading this and please do share with others. New visitors can <a href='$url'>click here</a> to subscribe to our newsletter.
                 </p>
+                $twitter
                 <p class='signature'>
                     Best wishes from the team at $name.
                 </p>

@@ -76,8 +76,13 @@ class SJD_ShortCode {
     private static function user_form( $submitted ){ 
         // $clean = array( "first_name"=>"Steve", "last_name"=>"Davison", "email"=>"stephenjohndavison@gmail.com" );
         // $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
+        $location = get_option("subscriber_location");
         $clean = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
         $errors = array( "first_name"=>"", "last_name"=>"", "email"=>"" );
+        if ( $location ){
+            $clean['location'] = "";
+            $errors['location'] = "";
+        } 
         $resend = false;
         $error = '';
         if ( $submitted ){
@@ -122,11 +127,16 @@ class SJD_ShortCode {
             }
 
         } ?>
-        <p>Enter details below and then click Register. All fields are required.</p>
+        <p>Enter details below and then click Register. All fields are required<?= $location?" (apart from location)":""?>.</p>
         <form id="sjd-subscribe" method="post">
             <?php foreach( $clean as $key => $value) { 
                 $label = str_replace('_',' ',$key);
                 $type = $key=='email' ? 'email' : 'text'; ?>
+
+                <?php if ( $location && $key === 'location' ) { ?>
+                    <p class="sjd-form-advice">If you want to be put in touch with like minded people in your area please provide a location to whatever level of detail you feel comfortable with, e.g. North West England or Liverpool.</p>
+                <?php } ?>
+
                 <div class="form-field">
                     <label for="<?= $key ?>"><?= $label ?></label>
                     <input type="<?=$type?>" name="<?=$key?>" value="<?=$value?>" class="<?=$errors[$key]?'error':'';?>"/>
@@ -147,7 +157,11 @@ class SJD_ShortCode {
             <?php wp_nonce_field('sjd_subscribe_submit','_sjd_subscribe_nonce'); ?>      
         </form>
 
-    <?php }
+        <h2>We respect your privacy</h2>
+        <p>Please note that as per our privacy policy your data will NOT be shared with or sold to third-parties and will be used solely to keep you up to data with our news.</p>
+
+    <?php 
+    }
 
 
 

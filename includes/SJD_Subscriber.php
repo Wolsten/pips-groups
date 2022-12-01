@@ -36,6 +36,7 @@ class SJD_Subscriber {
         array("name"=>"first_name", "title"=>"First name", "type"=>"text", "required"=>true),
         array("name"=>"last_name", "title"=>"Last name", "type"=>"text", "required"=>true),
         array("name"=>"email", "title"=>"Email", "type"=>"email", "required"=>true),
+        array("name"=>"location", "title"=>"Location", "type"=>"text", "required"=>false),
         array("name"=>"validation_key", "title"=>"Validation key", "type"=>"text", "required"=>false),
     );
 
@@ -182,6 +183,7 @@ class SJD_Subscriber {
             $new_subscriber['first_name'] = $fields['first_name'];
             $new_subscriber['last_name'] = $fields['last_name'];
             $new_subscriber['email'] = $fields['email'];
+            $new_subscriber['location'] = $fields['location'];
             $new_subscriber['validation_key'] = $validation_key;
             return (object) $new_subscriber;
         }
@@ -268,6 +270,7 @@ class SJD_Subscriber {
                     $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_email', $email, $unique=true);
                     $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_first_name', $first_name, $unique=true);
                     $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_last_name', $last_name, $unique=true);
+                    $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_location', $location, $unique=true);
                     $meta_id = update_post_meta($post_id, self::POST_PREFIX.'_validation_key', $validation_key, $unique=true);
                     echo "<p>Added subscriber $first_name $last_name ($email)</p>";
                 }
@@ -292,9 +295,10 @@ class SJD_Subscriber {
                 $email = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_email', $single=true);
                 $first_name = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_first_name', $single=true);
                 $last_name = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_last_name', $single=true);
+                $location = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_location', $single=true);
                 $validation_key = get_post_meta( $subscriber->ID, self::POST_PREFIX.'_validation_key', $single=true);
 
-                $line = "$email,$first_name,$last_name,$validation_key\n";
+                $line = "$email,$first_name,$last_name,$locations,$validation_key\n";
                 fwrite($handle,$line);
             }
 

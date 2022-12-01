@@ -40,3 +40,8 @@
     display: block;
     float: right;
 }
+
+.sjd-form-advice {
+    font-style: italic;
+    margin: 0;
+}
