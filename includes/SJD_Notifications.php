@@ -25,9 +25,12 @@ function onMailError( $wp_error ) {
     echo "</pre>";
 }  
 
+
 class SJD_Notifications {
+
     // private const DEBUG_EMAIL = "stephenjohndavison@gmail.com"; // Set to empty string for normal operation
     private const DEBUG_EMAIL = "";
+
 
     public static function send($post_id, $what, $min){
         $post = get_post($post_id);
@@ -36,9 +39,9 @@ class SJD_Notifications {
         echo "<p>Sending $what notification emails for post [$post_id] <strong>$post->post_title</strong></p>";
         // Check for shortcodes in the content
         if ( $what=='PAGE' ){
-            $re = '/^\[.{5,}\]/m';
+            $regex = '/^\[.{5,}\]/m';
             $str = $post->post_content;
-            if ( preg_match($re, $str)==1 ){
+            if ( preg_match($regex, $str)==1 ){
                 echo "<p>Could not send this content because it looks like it contains at least one shortcode, e.g. [name ....].</p>";
                 echo "<p>You cannot send page content with embedded shortcodes as they may generate dynamic content that is not available except via the web page but you can send as a link instead.</p>";
                 echo "<a href='/wp-admin/post.php?post=$post->ID&action=edit'>Back to post</a>";
@@ -46,6 +49,8 @@ class SJD_Notifications {
                 return;
             }
         }
+        // Construct the generic part of the notification
+        $message = self::get_notification_message($post, $what);
         // Get all subscribers
         $subscribers = SJD_Subscriber::all();
         $i = 0;
@@ -67,7 +72,8 @@ class SJD_Notifications {
                 $skipped ++;
                 echo "<li>$entry - SKIPPED</li>";
             } else if ($bad==0 || $stop_on_first_fail==false ) {
-                $status = self::send_notification_email($subscriber->ID, $subscriber->first_name, $email, $post, $what);
+
+                $status = self::send_notification_email($message, $subscriber->ID, $subscriber->first_name, $email, $post, $what);
                 if ( $status ){
                     $good ++;
                     echo "<li style='color:green;'>$entry - SENT</li>";
@@ -84,132 +90,134 @@ class SJD_Notifications {
     }
 
 
-
-
     public static function send_subscribe_email( $subscriber_id, $first_name, $email, $validation_key){
-        $name = get_bloginfo('name');
+
         $domain = get_bloginfo('url');
         $url = get_option('subscriber_url');
+        $name = get_bloginfo('name');
         $subject = "Confirm your subscription to $name";
         $headers = array("Content-Type: text/html; charset=UTF-8");
         $link = "$url?validate&email=$email&key=$validation_key";
-        $img = get_option('subscriber_email_image');
-        $message = array();
-        $message[] = self::header($name, get_option('subscriber_email_image'));
-        $message[] = "<br>";
-        $message[] = "<p>Hi $first_name,</p>";
-        $message[] = "<br>";
-        $message[] = "<p>Please <a href='$link'>click here</a> to validate your subscription to 
-                         receive updates from <strong>$name</strong>.</p>";
-        $message[] = self::subscription_footer($name,$domain);
-        $message = implode("",$message);
-        return wp_mail( $email, $subject, $message, $headers);
+        $img = self::image('');
+
+        $html = file_get_contents(  SJD_SUBSCRIBE_TEMPLATES_PATH . 'request_subscription_template.html');
+
+        $html = str_replace( '$name', $name, $html);
+        $html = str_replace( '$img', $img, $html);
+        $html = str_replace( '$style',self::style(), $html);
+        $html = str_replace( '$logo', self::logo(), $html);
+        $html = str_replace( '$first_name',$first_name, $html);
+        $html = str_replace( '$link',$link, $html);
+        $html = str_replace( '$domain',get_bloginfo('url'), $html);
+
+        return wp_mail( $email, $subject, $html, $headers);
     }
 
 
     public static function send_new_subscriber_email( $subscriber ){
-        // print_r($subscriber);
-        $post_type = SJD_Subscriber::POST_TYPE;
-        $email = get_option('notify_on_subscribe_email');
-        if ( $email == '' ){
-            $email = get_option('admin_email');
-        }
         $name = get_bloginfo('name');
-        $domain = get_bloginfo('url');
-        $url = get_option('subscriber_url');
-        $subject = "New subscriber to $name";
+        $subject = "New subscription to $name";
         $headers = array("Content-Type: text/html; charset=UTF-8");
-        $img = get_option('subscriber_email_image');
-        $message = array();
-        $message[] = self::header($name, get_option('subscriber_email_image'));
-        $message[] = "<p>You have a new subscriber [$subscriber->ID] $subscriber->first_name $subscriber->last_name ($subscriber->email), located in $subscriber->location</p>";
-        $message[] = "<p>View subscribers <a href='$domain/wp-admin/edit.php?post_type=$post_type'>here</a>. You will need to be logged in.</p>";
-        $message = implode("",$message);
-        return wp_mail( $email, $subject, $message, $headers);
+        $email = get_option('notify_on_subscribe_email');
+
+        $html = file_get_contents(  SJD_SUBSCRIBE_TEMPLATES_PATH . 'new_subscriber_template.html');
+
+        $html = str_replace( '$name', $name, $html);
+        $html = str_replace( '$style', self::style(), $html);
+        $html = str_replace( '$subscriber_id', $subscriber->ID, $html);
+
+        $html = str_replace( '$logo', self::logo(), $html);
+        $html = str_replace( '$subscriber_first_name', $subscriber->first_name, $html);
+        $html = str_replace( '$subscriber_last_name', $subscriber->last_name, $html);
+        $html = str_replace( '$subscriber_email', $subscriber->email, $html);
+        $html = str_replace( '$subscriber_location', $subscriber->location ? $subscriber->location : 'UNSPECIFIED', $html);
+
+        $html = str_replace( '$domain', get_bloginfo('url'), $html);
+        
+        return wp_mail( $email, $subject, $html, $headers);
     }
 
 
     public static function send_cancelled_subscriber_email( $subscriber ){
-        // print_r($subscriber);
-        $post_type = SJD_Subscriber::POST_TYPE;
-        $email = get_option('notify_on_subscribe_email');
-        if ( $email == '' ){
-            $email = get_option('admin_email');
-        }
         $name = get_bloginfo('name');
-        $domain = get_bloginfo('url');
-        $url = get_option('subscriber_url');
         $subject = "Cancelled subscription to $name";
         $headers = array("Content-Type: text/html; charset=UTF-8");
-        $img = get_option('subscriber_email_image');
-        $message = array();
-        $message[] = self::header($name, get_option('subscriber_email_image'));
-        $message[] = "<p>Subscriber [$subscriber->ID] $subscriber->first_name $subscriber->last_name ($subscriber->email) cancelled their subscription.</p>";
-        $message[] = "<p>View subscribers <a href='$domain/wp-admin/edit.php?post_type=$post_type'>here</a>. You will need to be logged in.</p>";
-        $message = implode("",$message);
-        return wp_mail( $email, $subject, $message, $headers);
+        $email = get_option('notify_on_subscribe_email');
+
+        $html = file_get_contents(  SJD_SUBSCRIBE_TEMPLATES_PATH . 'cancelled_subscriber_template.html');
+
+        $html = str_replace( '$name', $name, $html);
+        $html = str_replace( '$style', self::style(), $html);
+        $html = str_replace( '$subscriber_id', $subscriber->ID, $html);
+
+        $html = str_replace( '$logo', self::logo(), $html);
+        $html = str_replace( '$subscriber_first_name', $subscriber->first_name, $html);
+        $html = str_replace( '$subscriber_last_name', $subscriber->last_name, $html);
+        $html = str_replace( '$subscriber_email', $subscriber->email, $html);
+        $html = str_replace( '$subscriber_location', $subscriber->location ? $subscriber->location : 'UNSPECIFIED', $html);
+
+        $html = str_replace( '$domain', get_bloginfo('url'), $html);
+        
+        return wp_mail( $email, $subject, $html, $headers);
     }
 
 
-    public static function send_notification_email($subscriber_id, $first_name, $email, $post, $what){
-        $name = get_bloginfo('name');
-        $domain = get_bloginfo('url');
-        // Send in html format
-        $headers = array("Content-Type: text/html; charset=UTF-8");
-        $subject = "New content added to $name";
-        $link = "$domain/$post->post_name";
-        // Default image
-        $img = SJD_SUBSCRIBE_IMAGE;
-        $debug = "";
+    public static function image($post=''){
         // Use post thumbnail of has one
-        if ( has_post_thumbnail($post) ){
+        $img = SJD_SUBSCRIBE_IMAGE; // Default image
+        if ( $post && has_post_thumbnail($post) ){
             $img = get_the_post_thumbnail_url($post->ID,$size="large");
         // Fall back to image from plugin settings
         } else if ( get_option('subscriber_email_image') ) {
             $img = get_option('subscriber_email_image');
         }
-
-        $message = array();
-
-        // $message[] = "<h1>$debug</h1>";
-        
-        if ( $what === 'PAGE' ){
-            $message[] = self::header($post->post_title, $img);
-            $message[] = "<br>";
-            $message[] = "<p>Hi $first_name,</p>";
-            $message[] = "<br>";
-            $message[] = "<p>Here's an update from <strong>$name</strong>.</p>";
-            $message[] = "<div class='divider'></div>";
-            $content = $post->post_content;
-            // Remove any short codes - \n[xxxx]\n i.e. must start and end on one line
-            $regex = '/^\[.+\]$/m';
-            $replace = '';
-            $content = preg_replace($regex, $replace, $content); 
-            // Don't add breaks to tagged lines
-            $content = str_replace(">".PHP_EOL,"§§§",$content);
-            // Add breaks to none-tagged lines
-            $content = str_replace(PHP_EOL,"<br>",$content);
-            // Recover tagged lines
-            $content = str_replace("§§§",">",$content);
-            $message[] = self::pack($content);
-        } else {
-            $message[] = self::header($name, $img);
-            $message[] = "<p>Hi $first_name,</p>";
-            $message[] = "<p>We have just added a new post:</p>";
-            $message[] = "<div class='main-content'>";
-            $message[] = "<h1><a href='$link'>$post->post_title</a></h1>";
-            $message[] = "<p>$post->post_excerpt</p>";
-            $message[] = "</div>";
-        }
-        $message[] = self::notification_footer($name,$subscriber_id,$email);
-        $message = implode("",$message);
-        // echo $message;
-        // return true;
-        return wp_mail( $email, $subject, $message, $headers);
+        return $img;
     }
 
-    private static function header($name,$img){
-        // Site logo
+
+    public static function get_notification_message($post, $what){
+        $img = self::image($post);
+        $message = '';
+        $from = get_bloginfo('name');
+        $name = $post->post_title;
+        $domain = get_bloginfo('url');
+        if ( $what === 'PAGE' ){
+            $content = self::format($post->post_content);
+            $message ="<p class='excerpt'>$post->post_excerpt</p>$content";
+        } else {
+            $message = 
+                "<p>$post->post_excerpt</p>
+                 <p><a href='$domain/$post->post_name'>Click here to find out more</a>.</p>";
+        }
+
+        $html = file_get_contents(  SJD_SUBSCRIBE_TEMPLATES_PATH . 'new_content_notification_template.html' );
+
+        $html = str_replace( '$name', $name, $html);
+        $html = str_replace( '$from', $from, $html);
+        $html = str_replace( '$img', $img, $html);
+        $html = str_replace( '$style', self::style(), $html);
+        $html = str_replace( '$logo', self::logo(), $html);
+        $html = str_replace( '$message', $message, $html);
+        $html = str_replace( '$twitter', self::twitter(), $html);
+        $html = str_replace( '$contact_email',self::contact_email(), $html);
+
+        return $html;
+    }
+
+
+    public static function send_notification_email($html, $subscriber_id, $first_name, $email){
+        $headers = array("Content-Type: text/html; charset=UTF-8"); // Send in html format
+        $subject = "New content added to ".get_bloginfo('name');
+        // Subscriber specific details
+        $html = str_replace( '$first_name', $first_name, $html);
+        $html = str_replace( '$subscriber_url', get_option('subscriber_url'), $html);
+        $html = str_replace( '$subscriber_id', $subscriber_id, $html);
+        $html = str_replace( '$subscriber_email', $email, $html);
+        return wp_mail( $email, $subject, $html, $headers);
+    }
+
+
+    private static function logo(){
         $logo = "";
         if ( function_exists('sjd_config') ){ 
             $logo = sjd_config('logo');
@@ -219,118 +227,21 @@ class SJD_Notifications {
                 $logo = "<div class='site-logo'>$logo</div>";
             }
         }
-        $html = "<!doctype html>
-            <html xmlns='http://www.w3.org/1999/xhtml' xmlns:v='urn:schemas-microsoft-com:vml' xmlns:o='urn:schemas-microsoft-com:office:office'>
-                <head>
-                    <meta charset='UTF-8'>
-                    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-                    <meta name='viewport' content='width=device-width, initial-scale=1'>
-                    <title>$name</title>
-                </head>";
-         $html .= self::style();
-         $html .= "<body>
-                    <header>
-                        $logo
-                        <div class='site-name'>$name</div>
-                        <img class='header-image' src='$img'/>
-                    </header>";
-        return self::pack($html);
+        return $logo;
     }
+
 
     private static function style(){
         $primary_colour = get_option('subscriber_email_primary_colour');
-        return "<style>
-            body {
-                font-size: 12pt;
-                line-height: 1.5em;
-            }
-            header .site-logo {
-                text-align:center;
-            }
-            header .site-logo img {
-                width:120pt;
-                height:auto;
-            }
-            header img.header-image {
-                width:100%;
-                height:200px;
-                object-fit: cover;
-            }
-            header .site-name {
-                font-size:24pt;
-                line-height: 32pt;
-                text-align:center;
-                padding: 20pt;
-                margin: 0;
-                XXXborder: 1px solid lightgrey;
-                color:$primary_colour;
-                text-transform: uppercase;
-            }
-            footer {
-                margin:20pt 0 5pt 0;
-                padding: 10pt;
-                border: 1px solid lightgrey;
-                text-align:center;
-            }
-            h1, h2, h3 {
-                padding: 0;
-                margin: 0;
-                line-height: 1.5em;
-                color:$primary_colour;
-            }
-            h1 {
-                text-align:center;
-            }
-            h1 a {
-                text-decoration:none;
-                color:$primary_colour;
-            }
-            div.main-content {
-                margin:40px 10% 40px 10%;
-                padding: 10px;
-                border: 1px solid lightgrey;
-            }
-            div.main-content * {
-                text-align:center;
-            }
-            div.divider {
-                margin:40px 0;
-                border-bottom:1px solid lightgrey;
-            }
-            p {
-                padding:0;
-                margin:0;
-            }
-            p.signature {
-                margin: 40pt 0 0 0;
-                
-            }
-            blockquote {
-                font-style:italic;
-                margin:20pt 0 0 0;
-                padding: 10pt 20pt; 
-            }
-            h3.share {
-                margin-top:30pt;
-            }
-        </style>";
+        $excerpt_font_colour = get_option('subscriber_email_excerpt_font_colour');
+        $styling = file_get_contents(  SJD_SUBSCRIBE_TEMPLATES_PATH . 'template_styles.css' );
+        $styling = str_replace('$primary_colour',$primary_colour,$styling);
+        $styling = str_replace('$excerpt_font_colour',$excerpt_font_colour,$styling);
+        return "<style>$styling</style>";
     }
 
-    private static function subscription_footer($name,$domain){
-        $html = "<p class='signature'>Best wishes from the team at $name.</p>
-                <footer>
-                    <p>
-                        You have received this email because your details were used to register your interest 
-                        in <a href='$domain'>$name</a>. If this was not you can safely ignore this email.
-                    </p>
-                </footer>
-            </body>
-        </html>";
-        return self::pack($html);
-    }
 
-    private static function notification_footer($name, $subscriber_id,$email){
-        $url = get_option('subscriber_url');
+    private static function twitter(){
         $twitter = '';
         if ( function_exists('sjd_config') ){ 
             $twitter = sjd_config('twitter-handle');
@@ -338,33 +249,37 @@ class SJD_Notifications {
                 $twitter = "";
             } else {
                 $slug = str_replace('@','',$twitter);
-                $twitter = "<br/><p>You may also want to follow us on Twitter at <a href='https://twitter.com/$slug'>$twitter</a>.</p>";
+                $twitter = "You may also want to follow us on Twitter at <a href='https://twitter.com/$slug'>$twitter</a>.";
             }
         }
-
-        $html = "<h3 class='share'>Please share</h3>
-                <br/>
-                <p>
-                    If you enjoy reading this and please do share with others. New visitors can <a href='$url'>click here</a> to subscribe to our newsletter.
-                </p>
-                $twitter
-                <p class='signature'>
-                    Best wishes from the team at $name.
-                </p>
-                <footer>
-                    <p>
-                        To unsubscribe and stop receiving emails from us please <a href='$url?unsubscribe&id=$subscriber_id&email=$email'>click here</a>.
-                    </p>
-                </footer>
-            </body>
-        </html>";
-        return self::pack($html);
+        return $twitter;
     }
 
-    private static function pack($html){
-        $html = str_replace(PHP_EOL," ",$html);
-        $html = str_replace("  ", "§", $html);
-        return str_replace("§","",$html);
+    private static function contact_email(){
+        $email = get_option('contact_email');
+        if ( $email ){
+            $email = "Contact us via email at <a href='mailto:$email'>$email</a>.";
+        }
+        return $email;
     }
+
+
+    private static function format($content){
+        // Wrap all none tagged lines and ones that don't start with a link in 
+        // paragraph tags
+        $lines = explode(PHP_EOL,$content);
+        $html = '';
+        foreach( $lines as $line ){
+            if ( str_starts_with( $line, '<') &&
+                 str_starts_with( $line, '<A') == false && 
+                 str_starts_with( $line, '<a') == false){
+                $html .= $line;
+            } else if ( $line != '' ) {
+                $html .= "<p>$line</p>";
+            }
+        }
+        return $html;
+    }
+
 
 }

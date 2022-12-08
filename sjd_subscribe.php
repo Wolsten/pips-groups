@@ -1,20 +1,24 @@
 <?php
 /**
  * Plugin Name: SJD Subscribe
- * Version: 0.0.5
+ * Version: 0.0.6
  * Author: Steve Davison
  * Description: Provide simple subscription solution to register subscribers and manage 
  * email notifications for when new content is added
  */
 
-DEFINE( "SJD_SUBSCRIBE_VERSION", '0.0.5');
+DEFINE( "SJD_SUBSCRIBE_VERSION", '0.0.6');
 DEFINE( "SJD_SUBSCRIBE_IMAGE", plugins_url('sjd_subscribe_plugin/images/email.jpg'));
+DEFINE( 'SJD_SUBSCRIBE_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+DEFINE( 'SJD_SUBSCRIBE_TEMPLATES_PATH', SJD_SUBSCRIBE_PLUGIN_PATH . 'templates/' );
 
-REQUIRE_ONCE (plugin_dir_path( __FILE__ ) . 'includes/SJD_email.php');
-REQUIRE_ONCE (plugin_dir_path( __FILE__ ) . 'includes/SJD_ShortCode.php');
-REQUIRE_ONCE (plugin_dir_path( __FILE__ ) . 'includes/SJD_Subscriber.php');
-REQUIRE_ONCE (plugin_dir_path( __FILE__ ) . 'includes/SJD_Notifications.php');
-REQUIRE_ONCE (plugin_dir_path( __FILE__ ) . 'includes/SJD_Settings.php');
+REQUIRE_ONCE (SJD_SUBSCRIBE_PLUGIN_PATH . 'includes/SJD_email.php');
+REQUIRE_ONCE (SJD_SUBSCRIBE_PLUGIN_PATH . 'includes/SJD_ShortCode.php');
+REQUIRE_ONCE (SJD_SUBSCRIBE_PLUGIN_PATH . 'includes/SJD_Subscriber.php');
+REQUIRE_ONCE (SJD_SUBSCRIBE_PLUGIN_PATH . 'includes/SJD_Notifications.php');
+REQUIRE_ONCE (SJD_SUBSCRIBE_PLUGIN_PATH . 'includes/SJD_Settings.php');
+
+
 
 
 

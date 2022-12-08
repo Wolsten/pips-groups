@@ -16,6 +16,7 @@ mkdir ${plugin}
 
 # Copy the plugin files
 cp -r includes ${plugin}/
+cp -r templates ${plugin}/
 cp -r images ${plugin}/
 cp -r readme.md ${plugin}/
 cp -r sjd_subscribe.php ${plugin}/

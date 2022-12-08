@@ -10,6 +10,7 @@ plugin=/Users/steve/Sites/test/wp-content/plugins/sjd_subscribe_plugin
 
 # Copy the plugin files
 rsync -aru includes ${plugin}/
+rsync -aru templates ${plugin}/
 rsync -aru images ${plugin}/
 rsync -aru readme.md ${plugin}/
 rsync -aru sjd_subscribe.php ${plugin}/
