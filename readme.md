@@ -15,8 +15,6 @@ Create a page for managing subscriptions which has the `[sjd_subscribe_form]`.
 
 A Subscriber Settings page is provided and accessible from the main Dashboard menu.
 
-When first setting up a website, set the `message delay` and `emails per block` to conservative values to reduce the frequency of emails sending. This is particularly important if you have a large number of subscribers as you don't want to have yor email marked as spam. As time goes on the delay can be reduce and the block size increased.
-
 
 
 
