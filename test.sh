@@ -6,7 +6,7 @@
 #
 
 # Target plugins folders
-plugin=/Users/steve/Sites/test/wp-content/plugins/sjd_subscribe_plugin
+plugin=/Users/steve/Sites/test/wp-content/plugins/pips_groups_plugin
 
 # Remove the old plugin from the test application
 rm -R ${plugin}/
@@ -16,8 +16,6 @@ mkdir ${plugin}
 
 # Copy the plugin files
 cp -r includes ${plugin}/
-cp -r templates ${plugin}/
-cp -r images ${plugin}/
 cp -r readme.md ${plugin}/
-cp -r sjd_subscribe.php ${plugin}/
+cp -r pips_groups.php ${plugin}/
 cp -r styles.css ${plugin}/

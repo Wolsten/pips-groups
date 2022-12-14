@@ -1,15 +1,15 @@
-# SJD Subscribe Plugin
+# PIPS Plugin
 
-This plugin supports capturing subscribers and issuing notifications to subscribers. It uses opt in confirmation and SMTP mail settings to improve deliverability. 
+This plugin supports capturing other groups that support free speech and debate in pubs
 
 ## Installation
 
-To install, copy the required source files (not including the test.sh script) into it's own plugin folder `sjd_subscribe_plugin` 
+To install, copy the required source files (not including the test.sh script) into it's own plugin folder `pips_groups_plugin` 
 and then Activate as normal.
 
 ## Usage
 
-Create a page for managing subscriptions which has the `[sjd_subscribe_form]`.
+Create a page for managing subscriptions which has the `[PIPS_GROUPS_form]`.
 
 ## Settings
 
