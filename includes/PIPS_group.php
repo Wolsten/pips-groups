@@ -23,8 +23,16 @@ class PIPS_group {
              "title"=>"Email",
              "type"=>"email", 
              "validation"=>"email",
-             "required"=>true, 
+             "required"=>false, 
              "prefixed"=>true,
+            ),
+        array(
+            "name"=>"social",
+                "title"=>"Social media id (e.g. Twitter handle)",
+                "type"=>"text", 
+                "validation"=>"text",
+                "required"=>false, 
+                "prefixed"=>true,
             ),
         array(
             "name"=>"telephone", 
