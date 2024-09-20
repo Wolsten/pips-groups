@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: PiPs Groups
- * Version: 0.0.3
+ * Version: 0.0.3a
  * Author: Steve Davison
  * Description: Provide simple method to add custom posts for Pips Groups
  */
