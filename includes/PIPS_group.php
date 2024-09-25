@@ -66,7 +66,6 @@ class PIPS_group {
         add_action('add_meta_boxes', 'PIPS_group::add_meta_boxes', 10, 1 );
         add_action('save_post', 'PIPS_group::pips_save_meta_data' );
         add_filter('manage_'.self::POST_TYPE.'_posts_columns', 'PIPS_group::pips_admin_columns', 10, 1 );
-        add_action( 'manage_'.self::POST_TYPE.'_posts_custom_column' , 'PIPS_group::pips_admin_column', 10, 2 );
     }
 
 
@@ -171,18 +170,6 @@ class PIPS_group {
         }
         $columns['date'] = 'Date';
         return $columns;
-    }
-
-
-    /**
-     * Callback to display the custom data in the custom post type list view
-     *
-     * @param [type] $column_id
-     * @param [type] $post_id
-     * @return void
-     */
-    public static function pips_admin_column($column_id, $post_id){
-        echo get_post_meta( $post_id, $column_id, $single=true);
     }
 
 
