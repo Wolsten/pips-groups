@@ -26,11 +26,8 @@ function pips_groups_enqueue_style(){
 }
 
 
-add_action( 'init', 'PIPS_GROUPS_init');
+add_action('init', 'PIPS_group::pips_init');
 
-function PIPS_GROUPS_init(){
-    PIPS_group::init();
-}
 
 
 

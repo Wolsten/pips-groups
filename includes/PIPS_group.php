@@ -16,7 +16,6 @@ class PIPS_group {
             "type"=>"text", 
             "validation"=>"url",
             "required"=>true,
-            "prefixed"=>true,
         ),
         array(
             "name"=>"email",
@@ -24,7 +23,6 @@ class PIPS_group {
              "type"=>"email", 
              "validation"=>"email",
              "required"=>false, 
-             "prefixed"=>true,
             ),
         array(
             "name"=>"social",
@@ -32,7 +30,6 @@ class PIPS_group {
                 "type"=>"text", 
                 "validation"=>"text",
                 "required"=>false, 
-                "prefixed"=>true,
             ),
         array(
             "name"=>"telephone", 
@@ -40,7 +37,6 @@ class PIPS_group {
             "type"=>"text", 
             "validation"=>"text",
             "required"=>false, 
-            "prefixed"=>true,
         ),
         array(
             "name"=>"location", 
@@ -48,12 +44,11 @@ class PIPS_group {
             "type"=>"text", 
             "validation"=>"text",
             "required"=>false, 
-            "prefixed"=>true
         ),
     );
 
 
-    public static function init(){
+    public static function pips_init(){
         register_post_type(self::POST_TYPE, array(
             'label' => ucfirst(self::POST_TYPE),
             'singular_label' => ucfirst(self::POST_PREFIX),
@@ -69,18 +64,22 @@ class PIPS_group {
             'supports' => array('title', 'editor','excerpt','thumbnail')
         ));
         add_action('add_meta_boxes', 'PIPS_group::add_meta_boxes', 10, 1 );
-        add_action('save_post', 'PIPS_group::save_meta_data' );
-        add_filter('manage_'.self::POST_TYPE.'_posts_columns', 'PIPS_group::admin_columns', 10, 1 );
+        add_action('save_post', 'PIPS_group::pips_save_meta_data' );
+        add_filter('manage_'.self::POST_TYPE.'_posts_columns', 'PIPS_group::pips_admin_columns', 10, 1 );
+        add_action( 'manage_'.self::POST_TYPE.'_posts_custom_column' , 'PIPS_group::pips_admin_column', 10, 2 );
     }
 
 
+    /**
+     * Add meta boxes to custom post edit page
+     */
     public static function add_meta_boxes($post_type){
         if ( $post_type==self::POST_TYPE ) {
             foreach( self::CUSTOM_FIELDS as $field ){
                 add_meta_box(
-                    $html_id=self::prefix($field['prefixed']).$field['name'],
+                    $html_id=self::pips_prefix($field['name']),
                     $title=$field['title'],
-                    $display_callback=Array('PIPS_group','display_meta_box'),
+                    $display_callback=Array('PIPS_group','pips_display_meta_box'),
                     $screen=null, 
                     $context='normal', 
                     $priority='high',
@@ -110,30 +109,31 @@ class PIPS_group {
     // }
 
 
-    public static function display_meta_box( $post, $args){
+    /**
+     * Display the meta data in the custom post edit page
+     */
+    public static function pips_display_meta_box( $post, $args){
         $field = $args['args'][0];
-        $id = self::prefix($field['prefixed']).$field['name'];
+        $id = self::pips_prefix($field['name']);
         $value = esc_attr(get_post_meta( $post->ID, $id, true ));
-
         echo "&nbsp;<input type='".$field['type']."' id='$id' name='$id' value='$value' size='50' />";
         if ( $field['required'] && $value == '' ){
             echo "<p style='background-color:pink;padding:0.5rem;'>This value is required.</p>";
-            
         }
     }
 
 
-    public static function save_meta_data( $post_id ) {
+    public static function pips_save_meta_data( $post_id ) {
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ){
             return;
         }
         $post_type=get_post_type($post_id);
         if ( $post_type==self::POST_TYPE ) {
             foreach( self::CUSTOM_FIELDS as $field ){
-                $id = self::prefix($field['prefixed']).$field['name'];
+                $id = self::pips_prefix($field['name']);
                 // echo "<p>id = $id</p>";
                 if ( array_key_exists( $id, $_POST ) ){
-                    $data = self::sanitise_field($field['validation'], $_POST[$id]);
+                    $data = self::pips_sanitise_field($field['validation'], $_POST[$id]);
                     // echo "<p>Sanitised data = $data</p>";
                     update_post_meta( $post_id, $id, $data );
                 }
@@ -143,7 +143,7 @@ class PIPS_group {
     }
 
 
-    public static function sanitise_field($validation,$value){
+    public static function pips_sanitise_field($validation,$value){
         if ( $validation == 'email' ){
             return sanitize_email( $value );
         } else if ( $validation == 'integer') {
@@ -157,87 +157,40 @@ class PIPS_group {
     }
 
 
-    public static function admin_columns($columns){
+    /**
+     * Define the admin columns displayed in the custom post type list view
+     * by setting an associative array of “column name” ⇒ “label”. The “column name” 
+     * is passed to callback functions to identify the column. The “label” is shown 
+     * as the column header.
+     */
+    public static function pips_admin_columns($columns){
+        // Unset date column and add back to move to last column of list
         unset($columns['date']);
         foreach( self::CUSTOM_FIELDS as $field ){
-            $columns[self::prefix($field['prefixed']).$field['name']] = $field['name'];
+            $columns[self::pips_prefix($field['name'])] = $field['title'];
         }
         $columns['date'] = 'Date';
         return $columns;
     }
 
 
-    // public static function admin_column($column_id, $post_id){
-    //     echo get_post_meta( $post_id, $column_id, $single=true);
-    // }
-
-
-    public static function get( $email ){
-        $post = get_page_by_title($title=$email,$output='OBJECT',$post_type=self::POST_TYPE);
-        if ( $post ){
-            // Add meta data to the post object
-            $meta = get_post_meta( $post->ID );
-            if ( $meta ){
-                foreach( $meta as $key=>$value ){
-                    $name = str_replace(self::POST_PREFIX.'_', '', $key);
-                    $post->$name = $value[0];
-                }
-                return $post;
-            }
-        }
-        return false;
+    /**
+     * Callback to display the custom data in the custom post type list view
+     *
+     * @param [type] $column_id
+     * @param [type] $post_id
+     * @return void
+     */
+    public static function pips_admin_column($column_id, $post_id){
+        echo get_post_meta( $post_id, $column_id, $single=true);
     }
 
 
-    public static function create( $fields ){
-        $new_subscriber = array(
-            'post_title' => $fields['email'],
-            'post_status' => 'draft',
-            'post_type' => self::POST_TYPE,
-        );
-        $post_id = wp_insert_post($new_subscriber);
-        // echo "<p>post id $post_id</p>";
-        $success = true;
-        $validation_key = '';
-        if ( $post_id > 0 ){
-            foreach( self::CUSTOM_FIELDS as $field ){
-                $value = $fields[$field['name']];
-                $meta_id = update_post_meta($post_id, self::prefix($field['prefixed']).$field['name'], $value, $unique=true);
-                if ( $meta_id === false ){
-                    $success = false;
-                }
-            }
-        }
-        if ( $success ){
-            $new_group['ID'] = $post_id;
-            $new_group['website'] = $fields['website'];
-            $new_group['telephone'] = $fields['telephone'];
-            $new_group['email'] = $fields['email'];
-            $new_group['location'] = $fields['location'];
-            $new_group['latitude'] = $fields['latitude'];
-            $new_group['longitude'] = $fields['longitude'];
-            return (object) $new_group;
-        }
-        return false;
+    /**
+     * Add prefix for custom fields
+     */
+    public static function pips_prefix($field_name){
+        return self::POST_PREFIX."_$field_name";
     }
-
-
-    public static function all(){
-        $groups = get_posts(array(
-            'numberposts' => -1,
-            'post_type' => self::POST_TYPE,
-            'post_status' => 'publish'
-        ));
-        foreach( $groups as $group ){
-            $group->location = get_post_meta( $group->ID, self::POST_PREFIX.'location', $single=true);
-        }
-        return $groups;
-    }
-
-
-    public static function prefix($prefixed){
-        return $prefixed ? self::POST_PREFIX.'_' : '';
-    }
-
 
 }
