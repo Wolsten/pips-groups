@@ -63,9 +63,9 @@ class PIPS_group {
             'show_in_rest' => false,
             'supports' => array('title', 'editor','excerpt','thumbnail')
         ));
-        add_action('add_meta_boxes', 'PIPS_group::add_meta_boxes', 10, 1 );
-        add_action('save_post', 'PIPS_group::pips_save_meta_data' );
-        add_filter('manage_'.self::POST_TYPE.'_posts_columns', 'PIPS_group::pips_admin_columns', 10, 1 );
+        add_action('add_meta_boxes', __CLASS__.'::add_meta_boxes', 10, 1 );
+        add_action('save_post', __CLASS__.'::pips_save_meta_data' );
+        add_filter('manage_'.self::POST_TYPE.'_posts_columns', __CLASS__.'::pips_admin_columns', 10, 1 );
     }
 
 
@@ -78,7 +78,7 @@ class PIPS_group {
                 add_meta_box(
                     $html_id=self::pips_prefix($field['name']),
                     $title=$field['title'],
-                    $display_callback=Array('PIPS_group','pips_display_meta_box'),
+                    $display_callback=Array(__CLASS__,'pips_display_meta_box'),
                     $screen=null, 
                     $context='normal', 
                     $priority='high',
