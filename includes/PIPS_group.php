@@ -49,11 +49,14 @@ class PIPS_group {
 
 
     public static function pips_init(){
+        $user = wp_get_current_user();
+        $allowed_roles = array('editor', 'administrator');
+        $show_in_admin = array_intersect($allowed_roles, $user->roles );
         register_post_type(self::POST_TYPE, array(
             'label' => ucfirst(self::POST_TYPE),
             'singular_label' => ucfirst(self::POST_PREFIX),
             'public' => true,
-            'show_ui' => true, // UI in admin panel
+            'show_ui' => $show_in_admin , // UI in admin panel
             'show_in_menu' => true,
             'menu_icon' => 'dashicons-share',
             'capability_type' => 'post',
@@ -63,9 +66,11 @@ class PIPS_group {
             'show_in_rest' => false,
             'supports' => array('title', 'editor','excerpt','thumbnail')
         ));
-        add_action('add_meta_boxes', __CLASS__.'::add_meta_boxes', 10, 1 );
-        add_action('save_post', __CLASS__.'::pips_save_meta_data' );
-        add_filter('manage_'.self::POST_TYPE.'_posts_columns', __CLASS__.'::pips_admin_columns', 10, 1 );
+        if( $show_in_admin  ) {
+            add_action('add_meta_boxes', __CLASS__.'::add_meta_boxes', 10, 1 );
+            add_action('save_post', __CLASS__.'::pips_save_meta_data' );
+            add_filter('manage_'.self::POST_TYPE.'_posts_columns', __CLASS__.'::pips_admin_columns', 10, 1 );
+        }
     }
 
 
