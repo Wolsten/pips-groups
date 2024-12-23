@@ -4,44 +4,7 @@
 }
 
 .group-container {
-
     padding:0 2rem;
-
-    .list-container {
-
-        list-style: none;
-        padding:0;
-
-        .image {
-            height: 200px;
-            aspect-ratio: 4 / 3;
-        }
-
-        .title {
-            padding:0;
-            margin:0;
-            color:var(--sjd-colour-primary);
-        }
-
-        .sub-title {
-            padding:0;
-            margin:0;
-            font-size: smaller;
-            color:var(--sjd-colour-accent);
-        }
-
-        .list-item {
-            /* margin-bottom: 0.3rem; */
-            padding:0.5rem;
-            &:hover {
-                background-color: var(--sjd-colour-font);
-                .title, 
-                .sub-title {
-                    color:var(--sjd-colour-font-light);
-                }
-            }
-        }
-    }
 }
 
 
