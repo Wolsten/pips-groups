@@ -7,11 +7,10 @@
     padding:0 2rem;
 }
 
-
-
-body.mobile {
-    .group-container {
-        padding:0;
-    }
+body.mobile .group-container {
+    padding:0;
 }
 
+.groups-template-default .meta {
+    display:none;
+}
