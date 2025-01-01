@@ -3,13 +3,6 @@
     margin: 0 !important;
 }
 
-.group-container {
-    padding:0 2rem;
-}
-
-body.mobile .group-container {
-    padding:0;
-}
 
 .groups-template-default .meta {
     display:none;
