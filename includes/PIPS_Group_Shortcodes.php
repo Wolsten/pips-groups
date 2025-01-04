@@ -50,41 +50,21 @@ class PIPS_Group_ShortCodes {
 
     private static function grid($posts){
 
+        if ( !class_exists('SJD_Images')){
+            return '';
+        }
+
         $html = "<div class='archive-grid'>";
 
         foreach( $posts as $post ){
 
-            $permalink = get_permalink($post->ID);
+            $permalink = $post->post_name;
             $title = $post->post_title;
-            $image = "";
-            $image_url = get_stylesheet_directory_uri() . '/screenshot.jpg';
-            if ( has_post_thumbnail($post->ID) ) {
-                $image_url = get_the_post_thumbnail_url( $post->ID, 'thumbnail');
-            }
-            if ( $image_url != "" ){
-                $image = "<img src='$image_url'>";
-            }
+            $image = SJD_Images::archive_image( $post->ID, $echo = false, $url_only=false );
             $excerpt = get_the_excerpt($post->ID);
             $field = PIPS_group::pips_prefix('location');
             $location = esc_attr(get_post_meta( $post->ID, $field, true ));
-
-            $html .= "<article>
-
-                <a href='$permalink'>
-                    
-                    $image
-                    
-                    <header>
-                        <h2 class='title'>$title</h2>
-                        <h3 class='sub-title'>$location</h3>
-                    </header>
-
-                    <div class='body'>
-                        <p>$excerpt</p>
-                    </div>
-                </a>
-
-            </article>";
+            $html .= SJD_Images::archive_item($post->ID, $permalink, $title, $location, $excerpt);
 
         }
 
